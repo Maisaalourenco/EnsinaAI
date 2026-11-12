@@ -5,6 +5,7 @@ import cors from "cors";
 import "dotenv/config";
 import { supabaseAdmin } from "./config/supabase.js";
 import { rateLimit } from "express-rate-limit";
+import { autenticar } from "./middlewares/auth.js";
 
 // Criando o servidor
 const app = express();
@@ -236,6 +237,13 @@ app.get("/api/catalogo", async (req, res) => {
   }
 });
 
+
+app.get("/api/me", autenticar, (req, res) => {
+  return res.status(200).json({
+    sucesso: true,
+    usuario: req.usuario
+  });
+});
 
 // Inicializando o servidor
 app.listen(PORT, () => {
