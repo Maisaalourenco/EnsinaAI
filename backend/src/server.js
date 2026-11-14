@@ -7,6 +7,7 @@ import { supabaseAdmin } from "./config/supabase.js";
 import { rateLimit } from "express-rate-limit";
 import { autenticar } from "./middlewares/auth.js";
 import { permitirPapeis } from "./middlewares/autorizar.js";
+import { aplicarEscopoAtendimentos } from "./services/escopoAtendimentos.js";
 
 // Criando o servidor
 const app = express();
@@ -256,6 +257,69 @@ app.get(
       sucesso: true,
       mensagem: "Acesso administrativo autorizado."
     });
+  }
+);
+
+
+app.get(
+  "/api/atendimentos",
+  autenticar,
+  permitirPapeis("gestor", "atendente"),
+  async (req, res) => {
+    try {
+      // Começar com uma consulta limitada
+      let consulta = supabaseAdmin
+        .from("atendimentos")
+        .select(`
+          id,
+          lead_id,
+          atendente_id,
+          status,
+          criado_em
+        `)
+        .order("criado_em", {
+          ascending: false
+        })
+        .limit(20);
+
+      // Atendente só consulta seus atendimentos
+      consulta = aplicarEscopoAtendimentos(
+  consulta,
+  req.usuario
+      );
+
+      // Gestor pode consultar todos
+      const { data, error } = await consulta;
+
+      if (error) {
+        console.error(
+          "Erro na consulta:",
+          error.code
+        );
+
+        return res.status(502).json({
+          sucesso: false,
+          mensagem: "Erro ao consultar atendimentos."
+        });
+      }
+
+      return res.status(200).json({
+        sucesso: true,
+        total: data.length,
+        atendimentos: data
+      });
+
+    } catch (erro) {
+      console.error(
+        "Erro interno:",
+        erro.message
+      );
+
+      return res.status(500).json({
+        sucesso: false,
+        mensagem: "Erro interno do servidor."
+      });
+    }
   }
 );
 
