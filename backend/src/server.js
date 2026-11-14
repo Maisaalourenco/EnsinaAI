@@ -6,6 +6,7 @@ import "dotenv/config";
 import { supabaseAdmin } from "./config/supabase.js";
 import { rateLimit } from "express-rate-limit";
 import { autenticar } from "./middlewares/auth.js";
+import { permitirPapeis } from "./middlewares/autorizar.js";
 
 // Criando o servidor
 const app = express();
@@ -244,6 +245,20 @@ app.get("/api/me", autenticar, (req, res) => {
     usuario: req.usuario
   });
 });
+
+
+app.get(
+  "/api/admin/verificacao",
+  autenticar,
+  permitirPapeis("gestor"),
+  (req, res) => {
+    return res.status(200).json({
+      sucesso: true,
+      mensagem: "Acesso administrativo autorizado."
+    });
+  }
+);
+
 
 // Inicializando o servidor
 app.listen(PORT, () => {
