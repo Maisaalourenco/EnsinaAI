@@ -8,6 +8,7 @@ import { rateLimit } from "express-rate-limit";
 import { autenticar } from "./middlewares/auth.js";
 import { permitirPapeis } from "./middlewares/autorizar.js";
 import { aplicarEscopoAtendimentos } from "./services/escopoAtendimentos.js";
+import rotasIntegracoes from "./routes/integracoes.js";
 
 // Criando o servidor
 const app = express();
@@ -322,7 +323,9 @@ app.get(
     }
   }
 );
+// Rotas de integração com serviços externos
 
+app.use("/api/integracoes", rotasIntegracoes);
 
 // Inicializando o servidor
 app.listen(PORT, () => {

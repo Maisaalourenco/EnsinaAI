@@ -27,6 +27,19 @@ process.env.SUPABASE_PUBLISHABLE_KEY = ambiente.ANON_KEY;
 process.env.SUPABASE_SECRET_KEY = ambiente.SERVICE_ROLE_KEY;
 process.env.PORT = "3002";
 
+if (
+  !/^[a-f0-9]{64}$/.test(
+    ambiente.N8N_INTEGRATION_TOKEN ?? ""
+  )
+) {
+  throw new Error(
+    "Token de integração local ausente ou inválido."
+  );
+}
+
+process.env.N8N_INTEGRATION_TOKEN =
+  ambiente.N8N_INTEGRATION_TOKEN;
+
 console.log("Iniciando API com Supabase local.");
 
 await import("../src/server.js");
