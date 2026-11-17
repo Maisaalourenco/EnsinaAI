@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acesso ao CRM | ENSINA AÍ — Gestão Escolar</title>
+  <meta name="description" content="Portal de acesso ao CRM escolar ENSINA AÍ para colaboradores e gestores da escola." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/svg+xml" href="../assets/logo/logo-ensina-ai.svg" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/crm.css" />
+  <link rel="stylesheet" href="../css/crm-responsive.css" />
+</head>
+<body class="crm-login-body" data-crm-page="login" data-crm-dashboard-url="../crm.html#dashboard">
+  <a href="#login-main" class="skip-to-content">Pular para o formulário de acesso</a>
+
+  <div class="login-shell">
+    <!-- Área Principal de Login Centralizada -->
+    <main id="login-main" class="login-form-panel" tabindex="-1">
+      <div class="login-card">
+        <div class="login-card-header login-card-header-centered">
+          <img src="../assets/logo/logo-ensina-ai.svg" alt="ENSINA AÍ" class="login-logo" width="190" height="44" />
+          <h1 class="login-card-title">Bem-vindo de volta!</h1>
+          <p class="login-card-subtitle">Acesse sua conta para continuar</p>
+        </div>
+
+        <!-- Formulário de Login (Validação Front-end) -->
+        <form id="crm-login-form" class="login-form" novalidate>
+          <div class="form-group">
+            <label for="login-email" class="form-label">
+              <span>E-mail</span>
+              <span class="required-star" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="email"
+              id="login-email"
+              name="email"
+              class="form-control"
+              placeholder="nome@ensinaai.edu.br"
+              autocomplete="username"
+              required
+              aria-required="true"
+              aria-describedby="error-login-email"
+            />
+            <span class="form-error-msg" id="error-login-email" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password" class="form-label">
+              <span>Senha</span>
+              <span class="required-star" aria-hidden="true">*</span>
+            </label>
+            <div class="login-password-wrap">
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                class="form-control login-password-input"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+                aria-required="true"
+                aria-describedby="error-login-password"
+              />
+              <button
+                type="button"
+                id="toggle-password-visibility"
+                class="login-password-toggle"
+                aria-label="Mostrar senha"
+                aria-pressed="false"
+                aria-controls="login-password"
+              >
+                <svg class="icon-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="icon-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                  <line x1="2" x2="22" y1="2" y2="22"></line>
+                </svg>
+              </button>
+            </div>
+            <span class="form-error-msg" id="error-login-password" role="alert"></span>
+          </div>
+
+          <div class="login-options-row">
+            <label class="login-remember-label" for="login-remember">
+              <input type="checkbox" id="login-remember" name="remember" class="login-remember-checkbox" />
+              <span>Manter conectado</span>
+            </label>
+
+            <button type="button" id="btn-forgot-password" class="login-forgot-link">
+              Esqueci minha senha
+            </button>
+          </div>
+
+          <div id="login-error-banner" class="form-submit-error" role="alert" aria-live="assertive" hidden></div>
+
+          <button type="submit" id="btn-login-submit" class="btn btn-secondary login-submit-btn">
+            <span class="btn-spinner login-spinner" id="login-spinner" hidden aria-hidden="true"></span>
+            <span id="btn-login-submit-text">Entrar</span>
+          </button>
+        </form>
+
+        <!-- Painel Secundário: Esqueci minha senha (Interface) -->
+        <div id="login-recovery-panel" class="login-recovery-panel" hidden>
+          <h2 class="login-recovery-title">Recuperar acesso</h2>
+          <p class="login-recovery-desc">
+            Informe seu e-mail cadastrado. Quando a autenticação oficial estiver integrada, o link de redefinição será enviado ao seu endereço.
+          </p>
+          <div class="form-group">
+            <label for="recovery-email" class="form-label"><span>E-mail cadastrado</span></label>
+            <input
+              type="email"
+              id="recovery-email"
+              class="form-control"
+              placeholder="nome@ensinaai.edu.br"
+              aria-describedby="error-recovery-email"
+            />
+            <span class="form-error-msg" id="error-recovery-email" role="alert"></span>
+          </div>
+          <div id="recovery-feedback" class="crm-info-alert" role="status" hidden></div>
+          <div class="login-recovery-actions">
+            <button type="button" id="btn-recovery-send" class="btn btn-secondary">Solicitar redefinição</button>
+            <button type="button" id="btn-recovery-back" class="btn btn-outline">Voltar ao login</button>
+          </div>
+        </div>
+
+        <!-- Acesso Demonstrativo Explícito -->
+        <div class="login-demo-divider">
+          <span>modo demonstração</span>
+        </div>
+
+        <section class="login-demo-box" aria-label="Acesso em modo demonstração">
+          <div class="login-demo-header">
+            <strong>Explorar interface do CRM</strong>
+            <span class="login-demo-tag">Sem autenticação real</span>
+          </div>
+          <div class="login-demo-roles" role="group" aria-label="Selecionar perfil demonstrativo">
+            <label class="login-role-option">
+              <input type="radio" name="demo_role" value="gestor" checked />
+              <span>Gestor Escolar</span>
+            </label>
+            <label class="login-role-option">
+              <input type="radio" name="demo_role" value="atendente" />
+              <span>Atendente</span>
+            </label>
+          </div>
+
+          <button type="button" id="btn-demo-access" class="btn btn-outline login-demo-btn">
+            Entrar em Modo Demonstração
+          </button>
+        </section>
+
+        <div class="login-card-footer-links">
+          <a href="../index.html" class="login-card-back-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 12H5"></path>
+              <path d="m12 19-7-7 7-7"></path>
+            </svg>
+            <span>Voltar para o site</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/crm/app.js"></script>
+</body>
+</html>

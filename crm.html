@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | CRM ENSINA AÍ</title>
+  <meta name="description" content="Painel administrativo do CRM escolar ENSINA AÍ para gestão de leads, atendimentos, visitas e matrículas." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/svg+xml" href="assets/logo/logo-ensina-ai.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/crm.css" />
+  <link rel="stylesheet" href="css/crm-responsive.css" />
+</head>
+<body class="crm-app-body" data-crm-page="crm">
+  <a href="#crm-main-content" class="skip-to-content">Pular para o conteúdo do painel</a>
+
+  <div class="crm-layout" id="crm-layout">
+    <!-- Backdrop para Sidebar Mobile -->
+    <div class="crm-sidebar-backdrop" id="crm-sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- SIDEBAR LATERAL -->
+    <aside class="crm-sidebar" id="crm-sidebar" aria-label="Navegação do CRM">
+      <div class="crm-sidebar-header">
+        <a href="#dashboard" class="crm-brand-link" data-route="dashboard" aria-label="CRM ENSINA AÍ — Ir para Dashboard">
+          <span class="crm-brand-mark" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2" width="20" height="20" rx="6" fill="#1E3A8A"></rect>
+              <circle cx="12" cy="8.5" r="2.6" fill="#F59E0B"></circle>
+              <path d="M7 16.5C9 15 11 14.8 12 15.8C13 14.8 15 15 17 16.5V12.5C15 11.4 13 11.4 12 12.3C11 11.4 9 11.4 7 12.5V16.5Z" fill="#FFFFFF"></path>
+            </svg>
+          </span>
+          <span class="crm-brand-text">
+            <strong>ENSINA <span>AÍ</span></strong>
+            <small>CRM Escolar</small>
+          </span>
+        </a>
+
+        <button
+          type="button"
+          id="crm-sidebar-collapse-btn"
+          class="crm-sidebar-toggle"
+          aria-label="Recolher menu lateral"
+          aria-expanded="true"
+          title="Recolher ou expandir menu"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          id="crm-sidebar-close-mobile"
+          class="crm-sidebar-close-mobile"
+          aria-label="Fechar menu de navegação"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="crm-sidebar-nav" id="crm-sidebar-nav" aria-label="Módulos do sistema">
+        <!-- Renderizado dinamicamente por js/crm/navigation.js -->
+      </nav>
+
+      <div class="crm-sidebar-footer">
+        <a href="index.html" class="crm-sidebar-footer-link" title="Abrir Landing Page pública">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 3h6v6"></path>
+            <path d="M10 14 21 3"></path>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          </svg>
+          <span class="crm-nav-label">Ver Landing Page</span>
+        </a>
+        <a href="crm/login.html" id="crm-sidebar-logout" class="crm-sidebar-footer-link" title="Ir para tela de acesso">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" x2="9" y1="12" y2="12"></line>
+          </svg>
+          <span class="crm-nav-label">Tela de Acesso</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTEÚDO (CABEÇALHO + MAIN DINÂMICO) -->
+    <div class="crm-main-wrapper">
+      <!-- CABEÇALHO SUPERIOR -->
+      <header class="crm-header">
+        <div class="crm-header-left">
+          <button
+            type="button"
+            id="crm-mobile-menu-btn"
+            class="crm-mobile-menu-btn"
+            aria-label="Abrir menu lateral"
+            aria-controls="crm-sidebar"
+            aria-expanded="false"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" x2="20" y1="12" y2="12"></line>
+              <line x1="4" x2="20" y1="6" y2="6"></line>
+              <line x1="4" x2="20" y1="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="crm-page-heading">
+            <nav class="crm-breadcrumb" id="crm-breadcrumb" aria-label="Localização atual">
+              <span>CRM ENSINA AÍ</span>
+              <span aria-hidden="true">/</span>
+              <span class="crm-breadcrumb-current">Dashboard</span>
+            </nav>
+            <h1 class="crm-page-title" id="crm-page-title">Dashboard</h1>
+          </div>
+        </div>
+
+        <div class="crm-header-right">
+          <!-- Pesquisa Visual -->
+          <form class="crm-search-form" id="crm-search-form" role="search">
+            <label for="crm-search-input" class="sr-only">Pesquisar no CRM</label>
+            <svg class="crm-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <input
+              type="search"
+              id="crm-search-input"
+              class="crm-search-input"
+              placeholder="Pesquisar leads, módulos ou visitas..."
+              autocomplete="off"
+            />
+            <button type="submit" class="crm-search-submit" aria-label="Executar pesquisa visual">Ir</button>
+          </form>
+
+          <!-- Notificações -->
+          <div class="crm-popover-anchor">
+            <button
+              type="button"
+              id="crm-notifications-btn"
+              class="crm-icon-btn"
+              aria-label="Notificações do sistema"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="crm-notifications-panel"
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+              </svg>
+              <span class="crm-notif-badge" id="crm-notif-count">3</span>
+            </button>
+
+            <div class="crm-dropdown-panel crm-notifications-panel" id="crm-notifications-panel" role="region" aria-label="Central de notificações demonstrativas" hidden>
+              <div class="crm-dropdown-header">
+                <div>
+                  <strong>Notificações</strong>
+                  <span class="crm-dropdown-sub">Alertas demonstrativos</span>
+                </div>
+                <button type="button" id="crm-mark-all-read" class="crm-link-btn">Marcar lidas</button>
+              </div>
+              <ul class="crm-notif-list" id="crm-notif-list">
+                <!-- Preenchido via JS -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Menu do Usuário / Perfil -->
+          <div class="crm-popover-anchor">
+            <button
+              type="button"
+              id="crm-profile-btn"
+              class="crm-profile-btn"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="crm-profile-menu"
+            >
+              <span class="crm-user-avatar" id="crm-user-avatar" aria-hidden="true">CS</span>
+              <span class="crm-user-meta">
+                <strong id="crm-user-name">Coordenação Demo</strong>
+                <small id="crm-user-role">Gestor Escolar</small>
+              </span>
+              <svg class="crm-profile-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6"></path>
+              </svg>
+            </button>
+
+            <div class="crm-dropdown-panel crm-profile-menu" id="crm-profile-menu" role="menu" aria-label="Opções do usuário" hidden>
+              <div class="crm-profile-menu-head">
+                <strong id="crm-menu-user-name">Coordenação Demo</strong>
+                <span id="crm-menu-user-email">gestor.demo@ensinaai.edu.br</span>
+                <span class="crm-profile-badge" id="crm-menu-user-badge">Modo Demonstração</span>
+              </div>
+              <button type="button" class="crm-menu-item" role="menuitem" id="crm-switch-demo-role">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M16 3h5v5"></path>
+                  <path d="M8 3H3v5"></path>
+                  <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"></path>
+                  <path d="m15 9 6-6"></path>
+                </svg>
+                <span id="crm-switch-role-label">Alternar para visão Atendente</span>
+              </button>
+              <button type="button" class="crm-menu-item" role="menuitem" data-route-action="configuracoes">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <span>Preferências do sistema</span>
+              </button>
+              <div class="crm-menu-divider"></div>
+              <a href="crm/login.html" id="crm-menu-logout" class="crm-menu-item crm-menu-item-danger" role="menuitem">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" x2="9" y1="12" y2="12"></line>
+                </svg>
+                <span>Sair para tela de acesso</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ÁREA DINÂMICA DAS PÁGINAS -->
+      <main id="crm-main-content" class="crm-main-content" tabindex="-1">
+        <!-- Barra de aviso contextual (pesquisa/ações futuras) -->
+        <div id="crm-action-toast" class="crm-action-toast" role="status" aria-live="polite" hidden>
+          <span id="crm-action-toast-text"></span>
+          <button type="button" id="crm-action-toast-close" class="crm-toast-close" aria-label="Fechar aviso">&times;</button>
+        </div>
+
+        <!-- Container Dinâmico -->
+        <div id="crm-view-container" class="crm-view-container">
+          <!-- Renderizado dinamicamente por js/crm/app.js e js/crm/dashboard.js -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/crm/components.js"></script>
+  <script src="js/crm/navigation.js"></script>
+  <script src="js/crm/dashboard.js"></script>
+  <script src="js/crm/leads-service.js"></script>
+  <script src="js/crm/leads.js"></script>
+  <script src="js/crm/atendimentos-service.js"></script>
+  <script src="js/crm/atendimentos.js"></script>
+  <script src="js/crm/app.js"></script>
+</body>
+</html>

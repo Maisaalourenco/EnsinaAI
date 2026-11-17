@@ -87,17 +87,24 @@
           </li>
         </ul>
 
-        <!-- Botão no menu mobile -->
+        <!-- Botões no menu mobile -->
         <div class="nav-menu-cta">
-          <a href="#contato" class="btn btn-primary" style="width: 100%;">
+          <a href="#contato" class="btn btn-primary">
             Agendar Visita
             <img src="assets/icons/arrow-right.svg" alt="" class="icon" aria-hidden="true" />
+          </a>
+          <a href="crm/login.html" class="btn btn-outline btn-crm-access-mobile">
+            Trabalho na escola
           </a>
         </div>
       </nav>
 
-      <!-- Botão de Ação do Header (Desktop) + Toggle Mobile -->
+      <!-- Botões de Ação do Header (Desktop) + Toggle Mobile -->
       <div class="nav-actions">
+        <a href="crm/login.html" class="btn btn-outline btn-sm btn-crm-access" aria-label="Trabalho na escola — Acesso ao CRM">
+          Trabalho na escola
+        </a>
+
         <a href="#contato" class="btn btn-primary btn-sm btn-header-cta">
           Agendar Visita
         </a>
@@ -116,7 +123,7 @@
   <!-- ======================================================================
        CONTEÚDO PRINCIPAL
        ====================================================================== -->
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
 
     <!-- --------------------------------------------------------------------
          1. ÁREA HERO (DESTAQUE PRINCIPAL)
@@ -641,7 +648,7 @@
 
         </div>
 
-        <div class="provisional-badge-box" style="margin-top: 2rem; width: 100%; justify-content: center;">
+        <div class="provisional-badge-box provisional-badge-centered">
           <strong>[Categorias Demonstrativas]</strong> Pilares pedagógicos representativos que expressam a identidade e os valores fundamentais da ENSINA AÍ.
         </div>
 
@@ -786,7 +793,7 @@
         </div>
 
         <!-- Aviso Obrigatório de Provisoriedade -->
-        <div class="provisional-badge-box" style="margin-top: 2rem; width: 100%; justify-content: center;">
+        <div class="provisional-badge-box provisional-badge-centered">
           <strong>[Aviso Institucional Provisório]</strong> As informações e imagens apresentadas nesta seção são demonstrativas e destinam-se à estruturação visual e conceitual da Landing Page, não representando necessariamente a estrutura física definitiva da escola.
         </div>
 
@@ -889,7 +896,7 @@
 
         </div>
 
-        <div class="provisional-badge-box" style="margin-top: 2rem; width: 100%; justify-content: center;">
+        <div class="provisional-badge-box provisional-badge-centered">
           <strong>[Orientações Gerais]</strong> Respostas institucionais estruturadas para facilitar o primeiro contato das famílias com a ENSINA AÍ.
         </div>
 
@@ -934,7 +941,7 @@
                 <span>Conversar pelo WhatsApp</span>
               </a>
 
-              <div class="contact-details-list" style="margin-top: 1.5rem;">
+              <div class="contact-details-list">
                 
                 <!-- Telefone Institucional -->
                 <div class="contact-detail-item">
@@ -997,6 +1004,12 @@
 
             <!-- Formulário Interativo -->
             <form id="enrollment-form" novalidate>
+              <!-- Campo Honeypot Anti-Spam (oculto visualmente para usuários reais) -->
+              <div class="sr-honeypot" aria-hidden="true">
+                <label for="contact-website">Não preencha este campo</label>
+                <input type="text" id="contact-website" name="hp_site_ref" tabindex="-1" autocomplete="new-password" />
+              </div>
+
               <!-- Campo 1: Nome do Responsável -->
               <div class="form-group">
                 <label for="parent-name" class="form-label">
@@ -1010,11 +1023,29 @@
                   class="form-control" 
                   placeholder="Ex.: Carolina Silva dos Santos" 
                   autocomplete="name" 
+                  maxlength="120"
                   required 
                   aria-required="true"
                   aria-describedby="error-parent-name"
                 />
                 <span class="form-error-msg" id="error-parent-name" role="alert"></span>
+              </div>
+
+              <!-- Campo 1B (Opcional): Nome do Aluno(a) -->
+              <div class="form-group">
+                <label for="student-name" class="form-label">
+                  <span>Nome do Aluno(a) <span class="form-optional-tag">(opcional)</span></span>
+                </label>
+                <input 
+                  type="text" 
+                  id="student-name" 
+                  name="student_name" 
+                  class="form-control" 
+                  placeholder="Ex.: Lucas Silva dos Santos" 
+                  maxlength="120"
+                  aria-describedby="error-student-name"
+                />
+                <span class="form-error-msg" id="error-student-name" role="alert"></span>
               </div>
 
               <!-- Campo 2: Série ou Etapa Desejada -->
@@ -1098,12 +1129,53 @@
                   class="form-control" 
                   placeholder="exemplo@email.com" 
                   autocomplete="email" 
+                  maxlength="160"
                   required 
                   aria-required="true"
                   aria-describedby="error-parent-email"
                 />
                 <span class="form-error-msg" id="error-parent-email" role="alert"></span>
               </div>
+
+              <!-- Campo 6 (Opcional): Mensagem ou Melhor Horário -->
+              <div class="form-group">
+                <label for="parent-message" class="form-label">
+                  <span>Observação ou melhor horário para contato <span class="form-optional-tag">(opcional)</span></span>
+                </label>
+                <textarea 
+                  id="parent-message" 
+                  name="parent_message" 
+                  class="form-control form-textarea" 
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Ex.: Gostaria de agendar uma visita no período da tarde."
+                  aria-describedby="parent-message-counter error-parent-message"
+                ></textarea>
+                <span class="form-char-counter" id="parent-message-counter">0/500 caracteres</span>
+                <span class="form-error-msg" id="error-parent-message" role="alert"></span>
+              </div>
+
+              <!-- Campo 7: Consentimento LGPD -->
+              <div class="form-group form-checkbox-group">
+                <label for="lgpd-consent" class="form-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    id="lgpd-consent" 
+                    name="lgpd_consent" 
+                    class="form-checkbox-input" 
+                    required 
+                    aria-required="true"
+                    aria-describedby="error-lgpd-consent"
+                  />
+                  <span>
+                    Autorizo a equipe da <strong>ENSINA AÍ</strong> a entrar em contato por WhatsApp, telefone ou e-mail para atendimento sobre matrícula e agendamento de visita, conforme a LGPD. <span class="required-star" aria-hidden="true">*</span>
+                  </span>
+                </label>
+                <span class="form-error-msg" id="error-lgpd-consent" role="alert"></span>
+              </div>
+
+              <!-- Alerta de Erro de Envio (Preserva os dados digitados) -->
+              <div id="form-submit-error" class="form-submit-error" role="alert" aria-live="assertive" hidden></div>
 
               <!-- Botão de Submissão com Estado de Loading -->
               <button type="submit" class="btn btn-primary btn-submit-enrollment" id="btn-submit-enrollment">
@@ -1113,28 +1185,34 @@
               </button>
 
               <div class="form-local-notice">
-                <strong>[Ambiente Demonstrativo Local]</strong> Os dados são validados diretamente no navegador. O formulário ainda não realiza envio remoto ou gravação em banco de dados.
+                <strong>Atendimento Protegido:</strong> Seus dados são enviados com segurança para nossa secretaria escolar exclusivamente para contato sobre matrícula e agendamento de visita.
               </div>
             </form>
 
-            <!-- Estado de Sucesso Demonstrativo -->
+            <!-- Estado de Sucesso -->
             <div id="form-success-banner" class="form-success-banner" tabindex="-1" role="region" aria-live="polite">
               <div class="success-icon-badge">
                 <img src="assets/icons/check.svg" alt="" aria-hidden="true" />
               </div>
-              <h4 class="success-title">Demonstração Registrada com Sucesso!</h4>
+              <h4 class="success-title">Interesse em Matrícula Registrado!</h4>
               <p class="success-desc">
-                Todos os dados foram devidamente preenchidos e validados pelo sistema de demonstração local da ENSINA AÍ.
+                Recebemos sua solicitação com sucesso. Nossa equipe pedagógica entrará em contato pelos canais informados para apresentar a escola e agendar sua visita.
               </p>
+              <div class="form-dev-mock-badge" id="success-dev-mock-notice" hidden>
+                <strong>[Ambiente de Desenvolvimento]</strong> Simulação local ativa — nenhum dado foi enviado ao servidor.
+              </div>
+              <div class="success-protocol-badge" id="success-protocol-box" hidden>
+                Protocolo de atendimento: <strong id="success-protocol-code"></strong>
+              </div>
 
               <div class="success-details-box">
-                <strong>Resumo dos dados simulados:</strong>
+                <strong>Resumo dos dados enviados:</strong>
                 <ul id="success-summary-data"></ul>
               </div>
 
               <button type="button" class="btn-reset-form" id="btn-reset-form">
-                <img src="assets/icons/arrow-right.svg" alt="" style="transform: rotate(180deg); width: 14px; height: 14px;" />
-                Simular Novo Preenchimento
+                <img src="assets/icons/arrow-right.svg" alt="" class="btn-reset-icon" aria-hidden="true" />
+                Enviar Nova Solicitação
               </button>
             </div>
 
@@ -1147,7 +1225,7 @@
   </main>
 
   <!-- Modal Lightbox para Ampliação de Imagens da Infraestrutura -->
-  <div id="gallery-lightbox" class="gallery-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Visualizador de Imagem">
+  <div id="gallery-lightbox" class="gallery-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title" aria-describedby="gallery-modal-desc">
     <div class="gallery-modal-dialog">
       <button type="button" class="gallery-modal-close" aria-label="Fechar visualizador">
         <img src="assets/icons/close.svg" alt="" aria-hidden="true" />
@@ -1155,8 +1233,8 @@
       <img src="" alt="" class="gallery-modal-img" />
       <div class="gallery-modal-info">
         <div class="gallery-modal-text">
-          <h4 class="gallery-modal-title"></h4>
-          <p class="gallery-modal-desc"></p>
+          <h4 class="gallery-modal-title" id="gallery-modal-title"></h4>
+          <p class="gallery-modal-desc" id="gallery-modal-desc"></p>
         </div>
       </div>
     </div>
@@ -1272,6 +1350,8 @@
 
   <!-- Scripts Vanilla ES6+ -->
   <script src="js/script.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/lead-gateway.js"></script>
   <script src="js/form.js"></script>
   <script src="js/faq.js"></script>
 </body>

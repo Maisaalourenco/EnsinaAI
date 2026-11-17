@@ -1,0 +1,316 @@
+/* ==========================================================================
+   ENSINA AÍ — CRM Escolar
+   Estilos Responsivos do CRM e Login Visual (css/crm-responsive.css)
+   Desktop, Notebook, Tablet e Smartphone
+   ========================================================================== */
+
+/* Notebooks e Telas Médias (<= 1280px) */
+@media screen and (max-width: 1280px) {
+  .crm-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .crm-search-input {
+    width: 210px;
+  }
+
+  .crm-filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Tablets Horizontais e Notebooks Compactos (<= 1024px) */
+@media screen and (max-width: 1024px) {
+  .login-shell {
+    padding: 2rem 1.25rem;
+  }
+
+  .crm-dashboard-grid,
+  .crm-dashboard-secondary-grid,
+  .crm-dashboard-lower-grid,
+  .crm-placeholder-checklist,
+  .crm-attendant-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-header {
+    padding: 0 1.25rem;
+  }
+
+  .crm-main-content {
+    padding: 1.25rem;
+  }
+
+  .crm-search-input {
+    width: 180px;
+  }
+
+  .crm-leads-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .crm-filter-search {
+    grid-column: span 3;
+  }
+}
+
+/* Tablets Verticais e Smartphones (<= 768px) */
+@media screen and (max-width: 768px) {
+  .login-shell {
+    padding: 1.25rem 1rem;
+  }
+
+  .login-card {
+    padding: 1.75rem 1.35rem 1.5rem;
+  }
+
+  .crm-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 272px !important;
+    transform: translateX(-100%);
+  }
+
+  .crm-layout.is-mobile-open .crm-sidebar {
+    transform: translateX(0);
+  }
+
+  .crm-sidebar-toggle {
+    display: none;
+  }
+
+  .crm-sidebar-close-mobile,
+  .crm-mobile-menu-btn {
+    display: flex;
+  }
+
+  .crm-layout.is-sidebar-collapsed .crm-brand-text,
+  .crm-layout.is-sidebar-collapsed .crm-nav-group-title,
+  .crm-layout.is-sidebar-collapsed .crm-nav-label,
+  .crm-layout.is-sidebar-collapsed .crm-nav-pill {
+    display: initial;
+  }
+
+  .crm-layout.is-sidebar-collapsed .crm-brand-link {
+    display: flex;
+  }
+
+  .crm-layout.is-sidebar-collapsed .crm-nav-item-link,
+  .crm-layout.is-sidebar-collapsed .crm-sidebar-footer-link {
+    justify-content: flex-start;
+    padding: 0.62rem 0.75rem;
+  }
+
+  .crm-header {
+    height: auto;
+    min-height: 64px;
+    padding: 0.65rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .crm-header-left {
+    flex: 1;
+  }
+
+  .crm-header-right {
+    gap: 0.5rem;
+  }
+
+  .crm-search-form {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .crm-search-input {
+    width: 100%;
+  }
+
+  .crm-user-meta {
+    display: none;
+  }
+
+  .crm-profile-btn {
+    padding: 0.25rem;
+  }
+
+  .crm-profile-chevron {
+    display: none;
+  }
+
+  .crm-notifications-panel {
+    width: min(320px, calc(100vw - 2rem));
+    right: -44px;
+  }
+
+  .crm-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .crm-main-content {
+    padding: 1rem;
+  }
+
+  .crm-leads-header-bar {
+    padding: 1rem;
+  }
+
+  .crm-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-filter-search {
+    grid-column: span 2;
+  }
+
+  .crm-form-grid-2,
+  .crm-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-attendant-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-attendant-controls {
+    width: 100%;
+  }
+
+  .crm-attendant-controls select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .crm-modal-backdrop {
+    padding: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .crm-modal-dialog {
+    max-height: calc(100vh - 1.5rem);
+  }
+}
+
+/* Smartphones Estreitos (<= 480px) */
+@media screen and (max-width: 480px) {
+  .crm-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-demo-roles {
+    grid-template-columns: 1fr;
+  }
+
+  .login-recovery-actions {
+    flex-direction: column;
+  }
+
+  .crm-demo-banner {
+    padding: 0.85rem;
+  }
+
+  .crm-demo-banner-actions {
+    width: 100%;
+  }
+
+  .crm-demo-banner-actions .btn {
+    flex: 1;
+  }
+
+  .crm-panel,
+  .crm-placeholder-card {
+    padding: 1rem;
+  }
+
+  .crm-activity-item,
+  .crm-activity-item-btn {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .crm-origin-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-origin-donut {
+    margin: 0 auto;
+  }
+
+  .crm-leads-kpi-row,
+  .crm-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-filter-search {
+    grid-column: span 1;
+  }
+
+  .crm-leads-header-actions {
+    width: 100%;
+  }
+
+  .crm-leads-header-actions .btn {
+    width: 100%;
+  }
+
+  .crm-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-page-numbers {
+    justify-content: center;
+  }
+
+  .crm-modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .crm-detail-inline-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-detail-quick-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-quick-action-btn {
+    width: 100%;
+  }
+
+  .crm-modal-footer-split {
+    gap: 0.65rem;
+  }
+
+  .crm-modal-footer-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .crm-attendant-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-attendant-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-attendant-activity-btn {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
