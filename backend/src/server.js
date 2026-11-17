@@ -8,6 +8,7 @@ import { rateLimit } from "express-rate-limit";
 import { autenticar } from "./middlewares/auth.js";
 import { permitirPapeis } from "./middlewares/autorizar.js";
 import { aplicarEscopoAtendimentos } from "./services/escopoAtendimentos.js";
+import rotasIntegracoes from "./routes/integracoes.js";
 
 // Criando o servidor
 const app = express();
@@ -29,6 +30,29 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+
+const rotasComBanco = [
+  "/api/leads",
+  "/api/catalogo",
+  "/api/me",
+  "/api/admin/verificacao",
+  "/api/atendimentos"
+];
+
+// Impede o acesso às funcionalidades do banco
+// quando a conexão não está configurada.
+app.use(rotasComBanco, (req, res, next) => {
+  if (!supabaseAdmin) {
+    return res.status(503).json({
+      sucesso: false,
+      mensagem: "Banco de dados indisponível neste ambiente."
+    });
+  }
+
+  next();
+});
+
 
 // Primeira rota da nossa API
 app.get("/api/health", (req, res) => {
@@ -322,11 +346,19 @@ app.get(
     }
   }
 );
+// Rotas de integração com serviços externos
 
+app.use("/api/integracoes", rotasIntegracoes);
 
 // Inicializando o servidor
-app.listen(PORT, () => {
-  console.log(
-    `Servidor iniciado em http://localhost:${PORT}`
-  );
-});
+
+export default app;
+
+// Inicia o servidor somente fora da Vercel.
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(
+      `Servidor iniciado em http://localhost:${PORT}`
+    );
+  });
+}

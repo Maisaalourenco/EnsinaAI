@@ -2,25 +2,29 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 
-// Configurações armazenadas no arquivo .env
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
-// Verifica se as variáveis existem
-if (!supabaseUrl || !supabaseKey) {
+const credenciaisConfiguradas = Boolean(
+  supabaseUrl && supabaseKey
+);
+
+const ambientePreview =
+  process.env.VERCEL_ENV === "preview";
+
+// Fora da prévia, exigimos as credenciais normalmente.
+if (!credenciaisConfiguradas && !ambientePreview) {
   throw new Error(
-    "Configurações do Supabase não encontradas no .env"
+    "Configurações do Supabase não encontradas no ambiente."
   );
 }
 
-// Exporta a conexão para outros arquivos
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseKey,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false
-    }
-  }
-);
+// Na prévia sem credenciais, o banco fica indisponível.
+export const supabaseAdmin = credenciaisConfiguradas
+  ? createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    })
+  : null;
