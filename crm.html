@@ -137,6 +137,18 @@
             <button type="submit" class="crm-search-submit" aria-label="Executar pesquisa visual">Ir</button>
           </form>
 
+          <!-- Indicador e Alternância Rápida de Perfil (Simulação Visual) -->
+          <button
+            type="button"
+            id="crm-header-role-pill"
+            class="crm-header-role-pill"
+            data-role="gestor"
+            title="Alternar entre visão Gestor Escolar e Atendente (simulação front-end)"
+          >
+            <span class="crm-header-role-dot" aria-hidden="true"></span>
+            <span id="crm-header-role-text">Perfil: Gestor Escolar</span>
+          </button>
+
           <!-- Notificações -->
           <div class="crm-popover-anchor">
             <button
@@ -179,7 +191,7 @@
               aria-expanded="false"
               aria-controls="crm-profile-menu"
             >
-              <span class="crm-user-avatar" id="crm-user-avatar" aria-hidden="true">CS</span>
+              <span class="crm-user-avatar" id="crm-user-avatar" aria-hidden="true">CD</span>
               <span class="crm-user-meta">
                 <strong id="crm-user-name">Coordenação Demo</strong>
                 <small id="crm-user-role">Gestor Escolar</small>
@@ -248,6 +260,18 @@
   <script src="js/crm/leads.js"></script>
   <script src="js/crm/atendimentos-service.js"></script>
   <script src="js/crm/atendimentos.js"></script>
+  <script src="js/crm/tarefas-service.js"></script>
+  <script src="js/crm/tarefas.js"></script>
+  <script src="js/crm/visitas-service.js"></script>
+  <script src="js/crm/visitas.js"></script>
+  <script src="js/crm/equipe-service.js"></script>
+  <script src="js/crm/equipe.js"></script>
+  <script src="js/crm/relatorios-service.js"></script>
+  <script src="js/crm/relatorios.js"></script>
+  <script src="js/crm/conhecimento-service.js"></script>
+  <script src="js/crm/conhecimento.js"></script>
+  <script src="js/crm/configuracoes-service.js"></script>
+  <script src="js/crm/configuracoes.js"></script>
   <script src="js/crm/app.js"></script>
 </body>
 </html>

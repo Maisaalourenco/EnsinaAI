@@ -10,46 +10,63 @@
 
   const STORAGE_KEY = 'ensina_ai_crm_leads_demo_v1';
 
+  /**
+   * ATENÇÃO: Catálogos e registros abaixo são dados demonstrativos em front-end (localStorage).
+   * A integração definitiva com banco de dados e APIs será realizada em etapa posterior.
+   */
   const CATALOGS = Object.freeze({
     stages: [
-      { codigo: 'infantil_1', label: 'Educação Infantil • Berçário (1 ano)' },
-      { codigo: 'infantil_2_5', label: 'Educação Infantil • Maternal e Pré (2 a 5 anos)' },
-      { codigo: 'fundamental_1', label: 'Ensino Fundamental I (1º ao 5º ano)' },
-      { codigo: 'fundamental_2', label: 'Ensino Fundamental II (6º ao 9º ano)' },
-      { codigo: 'medio', label: 'Ensino Médio (1º ao 3º ano)' }
+      { codigo: 'educacao_infantil', label: 'Educação Infantil' },
+      { codigo: 'fundamental_1', label: 'Ensino Fundamental I' },
+      { codigo: 'fundamental_2', label: 'Ensino Fundamental II' },
+      { codigo: 'medio', label: 'Ensino Médio' },
+      { codigo: 'outros', label: 'Outros' }
     ],
     shifts: [
-      { codigo: 'matutino', label: 'Matutino' },
-      { codigo: 'vespertino', label: 'Vespertino' },
-      { codigo: 'integral', label: 'Integral' }
+      { codigo: 'manha', label: 'Manhã' },
+      { codigo: 'tarde', label: 'Tarde' },
+      { codigo: 'integral', label: 'Integral' },
+      { codigo: 'nao_informado', label: 'Não informado' }
     ],
     origins: [
-      { codigo: 'site', label: 'Site' },
-      { codigo: 'whatsapp', label: 'WhatsApp' },
       { codigo: 'instagram', label: 'Instagram' },
-      { codigo: 'presencial', label: 'Presencial' },
-      { codigo: 'outro', label: 'Outro' }
+      { codigo: 'facebook', label: 'Facebook' },
+      { codigo: 'whatsapp', label: 'WhatsApp' },
+      { codigo: 'site', label: 'Site' },
+      { codigo: 'indicacao', label: 'Indicação' },
+      { codigo: 'telefone', label: 'Telefone' },
+      { codigo: 'visita_presencial', label: 'Visita presencial' },
+      { codigo: 'outros', label: 'Outros' }
     ],
     statuses: [
       { codigo: 'novo', label: 'Novo' },
       { codigo: 'em_contato', label: 'Em contato' },
       { codigo: 'aguardando_retorno', label: 'Aguardando retorno' },
       { codigo: 'visita_agendada', label: 'Visita agendada' },
-      { codigo: 'concluido', label: 'Matrícula realizada' },
+      { codigo: 'concluido', label: 'Matriculado' },
       { codigo: 'perdido', label: 'Perdido' }
     ],
     attendants: [
       'Secretaria Demo',
       'Ana Paula Mendes (Demo)',
       'Rafael Costa (Demo)',
+      'Coordenação Demo',
       'Aguardando atribuição'
     ]
   });
 
   function isoDaysAgo(daysAgo, hours = 10, minutes = 0) {
-    const d = new Date();
+    const now = Date.now();
+    const d = new Date(now);
     d.setDate(d.getDate() - daysAgo);
     d.setHours(hours, minutes, 0, 0);
+    if (daysAgo === 0 && d.getTime() > now) {
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+      const elapsedMs = Math.max(0, now - startOfToday.getTime());
+      const ratio = Math.min(0.9, (hours * 60 + minutes) / (24 * 60));
+      return new Date(startOfToday.getTime() + Math.floor(elapsedMs * ratio)).toISOString();
+    }
     return d.toISOString();
   }
 
@@ -63,7 +80,7 @@
         telefone: '11987651001',
         email: 'mariana.oliveira@exemplo.com',
         etapa_codigo: 'fundamental_1',
-        turno_codigo: 'matutino',
+        turno_codigo: 'manha',
         origem: 'site',
         status: 'novo',
         atendente: 'Secretaria Demo',
@@ -77,7 +94,7 @@
         idade_aluno: 4,
         telefone: '11976541002',
         email: 'eduardo.ferreira@exemplo.com',
-        etapa_codigo: 'infantil_2_5',
+        etapa_codigo: 'educacao_infantil',
         turno_codigo: 'integral',
         origem: 'whatsapp',
         status: 'aguardando_retorno',
@@ -89,11 +106,11 @@
         id: 'LD-1003',
         nome_responsavel: 'Patricia Souza Almeida',
         nome_aluno: 'Helena Souza',
-        idade_aluno: 1,
+        idade_aluno: 2,
         telefone: '11991231003',
         email: 'patricia.souza@exemplo.com',
-        etapa_codigo: 'infantil_1',
-        turno_codigo: 'matutino',
+        etapa_codigo: 'educacao_infantil',
+        turno_codigo: 'manha',
         origem: 'instagram',
         status: 'visita_agendada',
         atendente: 'Secretaria Demo',
@@ -108,8 +125,8 @@
         telefone: '11982341004',
         email: 'ricardo.nogueira@exemplo.com',
         etapa_codigo: 'medio',
-        turno_codigo: 'matutino',
-        origem: 'site',
+        turno_codigo: 'manha',
+        origem: 'facebook',
         status: 'em_contato',
         atendente: 'Rafael Costa (Demo)',
         observacoes: 'Perguntou sobre simulados e preparação para vestibulares.',
@@ -123,8 +140,8 @@
         telefone: '11993451005',
         email: 'camila.andrade@exemplo.com',
         etapa_codigo: 'fundamental_2',
-        turno_codigo: 'vespertino',
-        origem: 'presencial',
+        turno_codigo: 'tarde',
+        origem: 'visita_presencial',
         status: 'concluido',
         atendente: 'Ana Paula Mendes (Demo)',
         observacoes: 'Documentação entregue na secretaria.',
@@ -139,10 +156,10 @@
         email: 'juliana.martins@exemplo.com',
         etapa_codigo: 'fundamental_1',
         turno_codigo: 'integral',
-        origem: 'whatsapp',
+        origem: 'indicacao',
         status: 'em_contato',
         atendente: 'Secretaria Demo',
-        observacoes: 'Avaliando logística de transporte escolar.',
+        observacoes: 'Indicada por família já matriculada no 4º ano.',
         criado_em: isoDaysAgo(4, 15, 40)
       },
       {
@@ -153,7 +170,7 @@
         telefone: '11995671007',
         email: 'fernando.rocha@exemplo.com',
         etapa_codigo: 'medio',
-        turno_codigo: 'matutino',
+        turno_codigo: 'nao_informado',
         origem: 'site',
         status: 'novo',
         atendente: 'Aguardando atribuição',
@@ -167,8 +184,8 @@
         idade_aluno: 3,
         telefone: '11976781008',
         email: 'larissa.campos@exemplo.com',
-        etapa_codigo: 'infantil_2_5',
-        turno_codigo: 'vespertino',
+        etapa_codigo: 'educacao_infantil',
+        turno_codigo: 'tarde',
         origem: 'instagram',
         status: 'visita_agendada',
         atendente: 'Ana Paula Mendes (Demo)',
@@ -183,8 +200,8 @@
         telefone: '11987891009',
         email: 'bruno.duarte@exemplo.com',
         etapa_codigo: 'fundamental_2',
-        turno_codigo: 'matutino',
-        origem: 'outro',
+        turno_codigo: 'manha',
+        origem: 'outros',
         status: 'perdido',
         atendente: 'Rafael Costa (Demo)',
         observacoes: 'Família optou por mudança de bairro.',
@@ -198,8 +215,8 @@
         telefone: '11998901010',
         email: 'renata.azevedo@exemplo.com',
         etapa_codigo: 'fundamental_1',
-        turno_codigo: 'vespertino',
-        origem: 'whatsapp',
+        turno_codigo: 'tarde',
+        origem: 'telefone',
         status: 'concluido',
         atendente: 'Secretaria Demo',
         observacoes: 'Matrícula confirmada após visita guiada.',
@@ -213,8 +230,8 @@
         telefone: '11989011011',
         email: 'gustavo.teixeira@exemplo.com',
         etapa_codigo: 'fundamental_2',
-        turno_codigo: 'matutino',
-        origem: 'site',
+        turno_codigo: 'manha',
+        origem: 'telefone',
         status: 'aguardando_retorno',
         atendente: 'Rafael Costa (Demo)',
         observacoes: 'Aguardando disponibilidade de horário dos pais para visita.',
@@ -227,11 +244,11 @@
         idade_aluno: 2,
         telefone: '11970121012',
         email: 'vanessa.cardoso@exemplo.com',
-        etapa_codigo: 'infantil_2_5',
+        etapa_codigo: 'educacao_infantil',
         turno_codigo: 'integral',
-        origem: 'presencial',
+        origem: 'visita_presencial',
         status: 'concluido',
-        atendente: 'Ana Paula Mendes (Demo)',
+        atendente: 'Coordenação Demo',
         observacoes: 'Atendimento presencial na recepção da escola.',
         criado_em: isoDaysAgo(21, 10, 30)
       },
@@ -239,15 +256,15 @@
         id: 'LD-1013',
         nome_responsavel: 'Thiago Moura Carvalho',
         nome_aluno: 'Giovanna Carvalho',
-        idade_aluno: 17,
+        idade_aluno: 18,
         telefone: '11991231013',
         email: 'thiago.moura@exemplo.com',
-        etapa_codigo: 'medio',
-        turno_codigo: 'matutino',
-        origem: 'site',
+        etapa_codigo: 'outros',
+        turno_codigo: 'nao_informado',
+        origem: 'facebook',
         status: 'novo',
         atendente: 'Secretaria Demo',
-        observacoes: 'Transferência para o 3º ano do Ensino Médio.',
+        observacoes: 'Consulta sobre curso preparatório e atividades extracurriculares.',
         criado_em: isoDaysAgo(25, 14, 5)
       },
       {
@@ -258,11 +275,11 @@
         telefone: '1140021014',
         email: 'luciana.barros@exemplo.com',
         etapa_codigo: 'fundamental_1',
-        turno_codigo: 'vespertino',
+        turno_codigo: 'tarde',
         origem: 'whatsapp',
         status: 'perdido',
         atendente: 'Rafael Costa (Demo)',
-        observacoes: 'Preferência pelo turno matutino sem vaga imediata na turma.',
+        observacoes: 'Preferência pelo turno da manhã sem vaga imediata na turma.',
         criado_em: isoDaysAgo(38, 16, 45)
       }
     ];
@@ -290,21 +307,38 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function normalizeStageCode(code) {
+    if (code === 'infantil_1' || code === 'infantil_2_5') return 'educacao_infantil';
+    return code || 'fundamental_1';
+  }
+
+  function normalizeShiftCode(code) {
+    if (code === 'matutino') return 'manha';
+    if (code === 'vespertino') return 'tarde';
+    return code || 'nao_informado';
+  }
+
+  function normalizeOriginCode(code) {
+    if (code === 'presencial') return 'visita_presencial';
+    if (code === 'outro') return 'outros';
+    return code || 'site';
+  }
+
   function getLabel(list, codigo, fallback = 'Não informado') {
     const found = list.find((item) => item.codigo === codigo);
     return found ? found.label : fallback;
   }
 
   function getStageLabel(codigo) {
-    return getLabel(CATALOGS.stages, codigo);
+    return getLabel(CATALOGS.stages, normalizeStageCode(codigo));
   }
 
   function getShiftLabel(codigo) {
-    return getLabel(CATALOGS.shifts, codigo);
+    return getLabel(CATALOGS.shifts, normalizeShiftCode(codigo));
   }
 
   function getOriginLabel(codigo) {
-    return getLabel(CATALOGS.origins, codigo);
+    return getLabel(CATALOGS.origins, normalizeOriginCode(codigo));
   }
 
   function getStatusLabel(codigo) {
@@ -359,6 +393,10 @@
     if (!lead || typeof lead !== 'object') return null;
     return {
       ...lead,
+      etapa_codigo: normalizeStageCode(lead.etapa_codigo),
+      turno_codigo: normalizeShiftCode(lead.turno_codigo),
+      origem: normalizeOriginCode(lead.origem),
+      atendente: String(lead.atendente || 'Aguardando atribuição').trim(),
       mensagem: String(lead.mensagem ?? '').trim(),
       observacoes: String(lead.observacoes ?? '').trim(),
       consentimento_contato: lead.consentimento_contato !== false,
@@ -411,10 +449,26 @@
     return true;
   }
 
+  function matchOwner(a, b) {
+    const eqSvc = globalScope.EnsinaAiEquipeService;
+    if (eqSvc && typeof eqSvc.matchOwnerName === 'function') {
+      return eqSvc.matchOwnerName(a, b);
+    }
+    const cleanA = String(a || '').replace(/\s*\(demo\)\s*/gi, '').trim().toLowerCase();
+    const cleanB = String(b || '').replace(/\s*\(demo\)\s*/gi, '').trim().toLowerCase();
+    return Boolean(cleanA && cleanB && cleanA === cleanB);
+  }
+
   function listLeads(filters = {}) {
     const allLeads = readLeadsFromStorage();
     const searchRaw = String(filters.search || '').trim().toLowerCase();
     const searchDigits = searchRaw.replace(/\D/g, '');
+    const attendSvc = globalScope.EnsinaAiAtendimentosService;
+    let leadIdsWithAttendance = null;
+    if (filters.withoutAttendance && attendSvc && typeof attendSvc.listAtendimentos === 'function') {
+      const allAtends = attendSvc.listAtendimentos({ page: 1, pageSize: 1000 }).items || [];
+      leadIdsWithAttendance = new Set(allAtends.map((a) => a.lead_id));
+    }
 
     const filtered = allLeads.filter((lead) => {
       if (filters.status && filters.status !== 'todos' && lead.status !== filters.status) {
@@ -427,6 +481,22 @@
         return false;
       }
       if (filters.origin && filters.origin !== 'todos' && lead.origem !== filters.origin) {
+        return false;
+      }
+      if (filters.unassignedOnly) {
+        const owner = String(lead.atendente || 'Aguardando atribuição').trim();
+        if (owner !== 'Aguardando atribuição') {
+          return false;
+        }
+      }
+      if (leadIdsWithAttendance && leadIdsWithAttendance.has(lead.id)) {
+        return false;
+      }
+      if (
+        filters.attendant &&
+        filters.attendant !== 'todos' &&
+        !matchOwner(lead.atendente || 'Aguardando atribuição', filters.attendant)
+      ) {
         return false;
       }
       if (!matchesPeriod(lead.criado_em, filters.period)) {
@@ -477,16 +547,25 @@
     return found ? clone(found) : null;
   }
 
-  function getStats() {
+  function getStats(filters = {}) {
     const allLeads = readLeadsFromStorage();
-    const total = allLeads.length;
-    const novos = allLeads.filter((l) => l.status === 'novo').length;
-    const emAtendimento = allLeads.filter((l) =>
+    const scoped =
+      filters && filters.attendant && filters.attendant !== 'todos'
+        ? allLeads.filter((l) => matchOwner(l.atendente || 'Aguardando atribuição', filters.attendant))
+        : allLeads;
+    const total = scoped.length;
+    const novos = scoped.filter((l) => l.status === 'novo').length;
+    const emAtendimento = scoped.filter((l) =>
       ['em_contato', 'aguardando_retorno', 'visita_agendada'].includes(l.status)
     ).length;
-    const concluidos = allLeads.filter((l) => l.status === 'concluido').length;
+    const aguardandoRetorno = scoped.filter((l) => l.status === 'aguardando_retorno').length;
+    const concluidos = scoped.filter((l) => l.status === 'concluido').length;
+    const perdidos = scoped.filter((l) => l.status === 'perdido').length;
+    const semResponsavel = scoped.filter(
+      (l) => !l.atendente || l.atendente === 'Aguardando atribuição'
+    ).length;
 
-    return { total, novos, emAtendimento, concluidos };
+    return { total, novos, emAtendimento, aguardandoRetorno, concluidos, perdidos, semResponsavel };
   }
 
   function generateNextId(existing) {
@@ -502,6 +581,8 @@
     const nowIso = new Date().toISOString();
     const id = generateNextId(allLeads);
     const hasConsent = Boolean(input.consentimento_contato);
+    const assignedAttendant =
+      String(input.atendente || '').trim() || actorName || 'Secretaria Demo';
 
     const newLead = {
       id,
@@ -510,11 +591,11 @@
       idade_aluno: input.idade_aluno ? Number(input.idade_aluno) : null,
       telefone: normalizePhoneDigits(input.telefone),
       email: String(input.email || '').trim().toLowerCase(),
-      etapa_codigo: String(input.etapa_codigo || 'fundamental_1'),
-      turno_codigo: String(input.turno_codigo || 'matutino'),
-      origem: String(input.origem || 'site'),
+      etapa_codigo: normalizeStageCode(String(input.etapa_codigo || 'fundamental_1')),
+      turno_codigo: normalizeShiftCode(String(input.turno_codigo || 'nao_informado')),
+      origem: normalizeOriginCode(String(input.origem || 'site')),
       status: 'novo',
-      atendente: actorName || 'Secretaria Demo',
+      atendente: assignedAttendant,
       mensagem: String(input.mensagem || '').trim(),
       observacoes: String(input.observacoes || '').trim(),
       consentimento_contato: hasConsent,
@@ -526,7 +607,7 @@
         {
           id: `H-${id}-${Date.now()}`,
           tipo: 'cadastro',
-          descricao: `Lead cadastrado manualmente via ${getOriginLabel(input.origem || 'site')}.`,
+          descricao: `Lead cadastrado manualmente via ${getOriginLabel(normalizeOriginCode(input.origem || 'site'))}.`,
           autor: actorName,
           criado_em: nowIso
         }
@@ -550,6 +631,17 @@
         ? Boolean(input.consentimento_contato)
         : current.consentimento_contato !== false;
 
+    const nextStatus = input.status ? String(input.status) : current.status;
+    const nextAttendant =
+      input.atendente !== undefined && String(input.atendente).trim()
+        ? String(input.atendente).trim()
+        : current.atendente;
+
+    const statusChangedText =
+      nextStatus !== current.status
+        ? ` Status atualizado para "${getStatusLabel(nextStatus)}".`
+        : '';
+
     const updated = {
       ...current,
       nome_responsavel: String(input.nome_responsavel || current.nome_responsavel).trim(),
@@ -560,9 +652,11 @@
           : null,
       telefone: normalizePhoneDigits(input.telefone || current.telefone),
       email: String(input.email || current.email).trim().toLowerCase(),
-      etapa_codigo: String(input.etapa_codigo || current.etapa_codigo),
-      turno_codigo: String(input.turno_codigo || current.turno_codigo),
-      origem: String(input.origem || current.origem),
+      etapa_codigo: normalizeStageCode(String(input.etapa_codigo || current.etapa_codigo)),
+      turno_codigo: normalizeShiftCode(String(input.turno_codigo || current.turno_codigo)),
+      origem: normalizeOriginCode(String(input.origem || current.origem)),
+      status: nextStatus,
+      atendente: nextAttendant,
       mensagem: String(input.mensagem ?? current.mensagem ?? '').trim(),
       observacoes: String(input.observacoes ?? current.observacoes ?? '').trim(),
       consentimento_contato: hasConsent,
@@ -572,7 +666,7 @@
         {
           id: `H-${id}-${Date.now()}`,
           tipo: 'edicao',
-          descricao: 'Dados cadastrais do lead atualizados.',
+          descricao: `Dados cadastrais do lead atualizados.${statusChangedText}`,
           autor: actorName,
           criado_em: nowIso
         },
@@ -616,6 +710,40 @@
           id: `H-${id}-${Date.now()}`,
           tipo: 'status',
           descricao: `Status alterado de "${oldLabel}" para "${newLabel}".`,
+          autor: actorName,
+          criado_em: nowIso
+        },
+        ...(Array.isArray(current.historico) ? current.historico : [])
+      ]
+    };
+
+    allLeads[index] = updated;
+    writeLeadsToStorage(allLeads);
+    return clone(updated);
+  }
+
+  function reassignLead(id, newAttendant, actorName = 'Coordenação Demo') {
+    const cleanTarget = String(newAttendant || '').trim();
+    if (!cleanTarget) return null;
+
+    const allLeads = readLeadsFromStorage();
+    const index = allLeads.findIndex((lead) => lead.id === id);
+    if (index === -1) return null;
+
+    const current = allLeads[index];
+    const previousOwner = current.atendente || 'Aguardando atribuição';
+    if (previousOwner === cleanTarget) return clone(current);
+
+    const nowIso = new Date().toISOString();
+    const updated = {
+      ...current,
+      atendente: cleanTarget,
+      atualizado_em: nowIso,
+      historico: [
+        {
+          id: `H-${id}-${Date.now()}`,
+          tipo: 'atribuicao',
+          descricao: `Responsável alterado de "${previousOwner}" para "${cleanTarget}".`,
           autor: actorName,
           criado_em: nowIso
         },
@@ -772,6 +900,7 @@
     updateLead,
     deleteLead,
     changeLeadStatus,
+    reassignLead,
     addLeadObservation,
     registerInteraction,
     scheduleVisit,

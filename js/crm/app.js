@@ -9,20 +9,45 @@
 
   const DEMO_SESSION_KEY = 'ensina_ai_crm_demo_session';
 
+  /**
+   * ATENÇÃO: Perfis demonstrativos em memória/sessionStorage apenas para simular
+   * a experiência de Atendente vs. Gestor Escolar no front-end.
+   * A autenticação real e a autorização definitiva serão implementadas no back-end.
+   */
   const DEMO_PROFILES = Object.freeze({
     gestor: {
       role: 'gestor',
       roleLabel: 'Gestor Escolar',
+      scopeLabel: 'Visão Gerencial • Toda a escola',
       name: 'Coordenação Demo',
       initials: 'CD',
-      email: 'gestor.demo@ensinaai.edu.br'
+      email: 'gestor.demo@ensinaai.edu.br',
+      capabilities: {
+        scope: 'all',
+        canManageTeam: true,
+        canDistributeLeads: true,
+        canReassignTasks: true,
+        canManageKnowledgeBase: true,
+        canManageSchoolSettings: true,
+        canViewTeamComparison: true
+      }
     },
     atendente: {
       role: 'atendente',
       roleLabel: 'Atendente',
+      scopeLabel: 'Visão Operacional • Minha carteira',
       name: 'Secretaria Demo',
       initials: 'SD',
-      email: 'atendimento.demo@ensinaai.edu.br'
+      email: 'atendimento.demo@ensinaai.edu.br',
+      capabilities: {
+        scope: 'own',
+        canManageTeam: false,
+        canDistributeLeads: false,
+        canReassignTasks: false,
+        canManageKnowledgeBase: false,
+        canManageSchoolSettings: false,
+        canViewTeamComparison: false
+      }
     }
   });
 
@@ -271,11 +296,27 @@
     const dashboardApi = globalScope.EnsinaAiCrmDashboard;
     const leadsApi = globalScope.EnsinaAiCrmLeads;
     const atendimentosApi = globalScope.EnsinaAiCrmAtendimentos;
+    const tarefasApi = globalScope.EnsinaAiCrmTarefas;
+    const visitasApi = globalScope.EnsinaAiCrmVisitas;
+    const equipeApi = globalScope.EnsinaAiCrmEquipe;
+    const relatoriosApi = globalScope.EnsinaAiCrmRelatorios;
+    const conhecimentoApi = globalScope.EnsinaAiCrmConhecimento;
+    const configuracoesApi = globalScope.EnsinaAiCrmConfiguracoes;
+    const configuracoesService = globalScope.EnsinaAiConfiguracoesService;
     if (!navApi || !dashboardApi) return;
+
+    if (configuracoesService && typeof configuracoesService.applyVisualPreferences === 'function') {
+      configuracoesService.applyVisualPreferences(configuracoesService.getSettings());
+    }
 
     let currentSession = getStoredDemoSession();
     let currentRoute = navApi.resolveRoute(globalScope.location.hash);
     let pendingLeadsSearch = '';
+    let pendingAtendimentosContext = null;
+    let pendingTarefasContext = null;
+    let pendingVisitasContext = null;
+    let pendingEquipeSearch = '';
+    let pendingConhecimentoSearch = '';
     const notificationsState = DEMO_NOTIFICATIONS.map((item) => ({ ...item }));
 
     const toastEl = document.getElementById('crm-action-toast');
@@ -303,18 +344,38 @@
       const roleEl = document.getElementById('crm-user-role');
       const menuNameEl = document.getElementById('crm-menu-user-name');
       const menuEmailEl = document.getElementById('crm-menu-user-email');
+      const menuBadgeEl = document.getElementById('crm-menu-user-badge');
       const switchLabelEl = document.getElementById('crm-switch-role-label');
+      const quickRoleBtn = document.getElementById('crm-header-role-pill');
+      const quickRoleText = document.getElementById('crm-header-role-text');
 
       if (avatarEl) avatarEl.textContent = currentSession.initials;
       if (nameEl) nameEl.textContent = currentSession.name;
       if (roleEl) roleEl.textContent = currentSession.roleLabel;
       if (menuNameEl) menuNameEl.textContent = currentSession.name;
       if (menuEmailEl) menuEmailEl.textContent = currentSession.email;
+      if (menuBadgeEl) {
+        menuBadgeEl.textContent = `Simulação Front-end • ${currentSession.roleLabel}`;
+      }
       if (switchLabelEl) {
         switchLabelEl.textContent =
           currentSession.role === 'gestor'
             ? 'Alternar para visão Atendente'
             : 'Alternar para visão Gestor Escolar';
+      }
+      if (quickRoleBtn && quickRoleText) {
+        quickRoleText.textContent =
+          currentSession.role === 'gestor' ? 'Perfil: Gestor Escolar' : 'Perfil: Atendente';
+        quickRoleBtn.setAttribute(
+          'data-role',
+          currentSession.role === 'atendente' ? 'atendente' : 'gestor'
+        );
+        quickRoleBtn.setAttribute(
+          'title',
+          currentSession.role === 'gestor'
+            ? 'Modo demonstração (Gestor Escolar). Clique para alternar para Atendente.'
+            : 'Modo demonstração (Atendente). Clique para alternar para Gestor Escolar.'
+        );
       }
     }
 
@@ -348,18 +409,49 @@
 
     function navigateTo(routeId, updateHash = true) {
       currentRoute = navApi.resolveRoute(routeId);
-      navApi.renderSidebarNav(sidebarNav, currentRoute);
-      navApi.updateHeaderMeta(currentRoute);
+      const isAllowed =
+        typeof navApi.isRouteAllowedForRole === 'function'
+          ? navApi.isRouteAllowedForRole(currentRoute, currentSession.role)
+          : true;
+
+      navApi.renderSidebarNav(sidebarNav, currentRoute, currentSession.role);
+      navApi.updateHeaderMeta(currentRoute, currentSession.role);
 
       if (updateHash && globalScope.location.hash !== `#${currentRoute}`) {
         globalScope.history.replaceState(null, '', `#${currentRoute}`);
+      }
+
+      if (!isAllowed && typeof navApi.renderRestrictedModuleView === 'function') {
+        navApi.renderRestrictedModuleView(viewContainer, currentSession.role, () =>
+          navigateTo('dashboard')
+        );
+        return;
+      }
+
+      function navigateWithContext(targetRoute, ctxObj = null) {
+        const resolved = navApi.resolveRoute(targetRoute);
+        if (resolved === 'leads') {
+          pendingLeadsSearch = (ctxObj && (ctxObj.search || ctxObj.leadId)) || '';
+        } else if (resolved === 'atendimentos') {
+          pendingAtendimentosContext = ctxObj || null;
+        } else if (resolved === 'tarefas') {
+          pendingTarefasContext = ctxObj || null;
+        } else if (resolved === 'visitas') {
+          pendingVisitasContext = ctxObj || null;
+        } else if (resolved === 'equipe') {
+          pendingEquipeSearch = (ctxObj && ctxObj.search) || '';
+        } else if (resolved === 'base-conhecimento') {
+          pendingConhecimentoSearch = (ctxObj && ctxObj.search) || '';
+        }
+        navigateTo(resolved);
       }
 
       if (currentRoute === 'dashboard') {
         dashboardApi.renderDashboard(viewContainer, {
           monthsCount: 6,
           session: currentSession,
-          onNavigate: (nextRoute) => navigateTo(nextRoute)
+          onNavigate: (nextRoute) => navigateTo(nextRoute),
+          onNavigateModule: navigateWithContext
         });
       } else if (currentRoute === 'leads' && leadsApi) {
         const initialSearch = pendingLeadsSearch;
@@ -367,13 +459,75 @@
         leadsApi.renderLeadsModule(viewContainer, {
           session: currentSession,
           initialSearch,
-          onToast: showToast
+          onToast: showToast,
+          onNavigateModule: navigateWithContext,
+          onOpenAtendimentos: (ctxObj) => navigateWithContext('atendimentos', ctxObj)
         });
       } else if (currentRoute === 'atendimentos' && atendimentosApi) {
+        const atendCtx = pendingAtendimentosContext || {};
+        pendingAtendimentosContext = null;
         atendimentosApi.renderAtendimentosModule(viewContainer, {
           session: currentSession,
+          initialLeadId: atendCtx.leadId || '',
+          initialSearch: atendCtx.search || '',
+          autoOpenNewModal: Boolean(atendCtx.autoOpenNewModal),
           onToast: showToast,
-          onNavigate: (nextRoute) => navigateTo(nextRoute)
+          onNavigate: (nextRoute) => navigateTo(nextRoute),
+          onNavigateModule: navigateWithContext,
+          onOpenLead: (leadId) => navigateWithContext('leads', { search: leadId || '' })
+        });
+      } else if (currentRoute === 'tarefas' && tarefasApi) {
+        const tarefasCtx = pendingTarefasContext || {};
+        pendingTarefasContext = null;
+        tarefasApi.renderTarefasModule(viewContainer, {
+          session: currentSession,
+          initialLeadId: tarefasCtx.leadId || '',
+          initialAtendimentoId: tarefasCtx.atendimentoId || '',
+          initialSearch: tarefasCtx.search || '',
+          autoOpenNewModal: Boolean(tarefasCtx.autoOpenNewModal),
+          onToast: showToast,
+          onNavigateModule: navigateWithContext
+        });
+      } else if (currentRoute === 'visitas' && visitasApi) {
+        const visitasCtx = pendingVisitasContext || {};
+        pendingVisitasContext = null;
+        visitasApi.renderVisitasModule(viewContainer, {
+          session: currentSession,
+          initialLeadId: visitasCtx.leadId || '',
+          initialAtendimentoId: visitasCtx.atendimentoId || '',
+          initialSearch: visitasCtx.search || '',
+          autoOpenNewModal: Boolean(visitasCtx.autoOpenNewModal),
+          onToast: showToast,
+          onNavigateModule: navigateWithContext
+        });
+      } else if (currentRoute === 'equipe' && equipeApi) {
+        const initialEquipeSearch = pendingEquipeSearch;
+        pendingEquipeSearch = '';
+        equipeApi.renderEquipeModule(viewContainer, {
+          session: currentSession,
+          initialSearch: initialEquipeSearch,
+          onToast: showToast,
+          onNavigateModule: navigateWithContext
+        });
+      } else if (currentRoute === 'relatorios' && relatoriosApi) {
+        relatoriosApi.renderRelatoriosModule(viewContainer, {
+          session: currentSession,
+          onToast: showToast,
+          onNavigateModule: navigateWithContext
+        });
+      } else if (currentRoute === 'base-conhecimento' && conhecimentoApi) {
+        const initialKbSearch = pendingConhecimentoSearch;
+        pendingConhecimentoSearch = '';
+        conhecimentoApi.renderConhecimentoModule(viewContainer, {
+          session: currentSession,
+          initialSearch: initialKbSearch,
+          onToast: showToast
+        });
+      } else if (currentRoute === 'configuracoes' && configuracoesApi) {
+        configuracoesApi.renderConfiguracoesModule(viewContainer, {
+          session: currentSession,
+          onToast: showToast,
+          onSwitchDemoRole: handleSwitchDemoRole
         });
       } else {
         navApi.renderPlannedModuleView(viewContainer, currentRoute, () => navigateTo('dashboard'));
@@ -426,17 +580,47 @@
       });
     }
 
+    const quickRoleBtn = document.getElementById('crm-header-role-pill');
+
+    function handleSwitchDemoRole() {
+      const nextRole = currentSession.role === 'gestor' ? 'atendente' : 'gestor';
+      currentSession = saveDemoSession(nextRole);
+      syncUserHeader();
+      closeHeaderPopovers();
+      if (
+        currentSession.role === 'atendente' &&
+        typeof navApi.isRouteAllowedForRole === 'function' &&
+        !navApi.isRouteAllowedForRole(currentRoute, currentSession.role)
+      ) {
+        currentRoute = 'dashboard';
+        navigateTo('dashboard', true);
+        showToast(
+          `Visão alternada para ${currentSession.roleLabel}. Módulo Equipe é exclusivo do Gestor Escolar.`
+        );
+        return;
+      }
+      if (
+        currentRoute === 'dashboard' ||
+        currentRoute === 'leads' ||
+        currentRoute === 'atendimentos' ||
+        currentRoute === 'tarefas' ||
+        currentRoute === 'visitas' ||
+        currentRoute === 'equipe' ||
+        currentRoute === 'relatorios' ||
+        currentRoute === 'base-conhecimento' ||
+        currentRoute === 'configuracoes'
+      ) {
+        navigateTo(currentRoute, false);
+      }
+      showToast(`Visão demonstrativa alternada para: ${currentSession.roleLabel}.`);
+    }
+
     if (switchRoleBtn) {
-      switchRoleBtn.addEventListener('click', () => {
-        const nextRole = currentSession.role === 'gestor' ? 'atendente' : 'gestor';
-        currentSession = saveDemoSession(nextRole);
-        syncUserHeader();
-        closeHeaderPopovers();
-        if (currentRoute === 'dashboard' || currentRoute === 'leads' || currentRoute === 'atendimentos') {
-          navigateTo(currentRoute, false);
-        }
-        showToast(`Visão demonstrativa alternada para: ${currentSession.roleLabel}.`);
-      });
+      switchRoleBtn.addEventListener('click', handleSwitchDemoRole);
+    }
+
+    if (quickRoleBtn) {
+      quickRoleBtn.addEventListener('click', handleSwitchDemoRole);
     }
 
     document.querySelectorAll('[data-route-action]').forEach((btn) => {
@@ -459,13 +643,22 @@
         }
 
         const matchedRoute = Object.keys(navApi.MODULE_META).find((key) => {
-          const title = navApi.MODULE_META[key].title.toLowerCase();
-          return title.includes(query) || key.includes(query);
+          const roleMeta =
+            typeof navApi.getModuleMetaForRole === 'function'
+              ? navApi.getModuleMetaForRole(key, currentSession.role)
+              : navApi.MODULE_META[key];
+          const baseTitle = navApi.MODULE_META[key].title.toLowerCase();
+          const roleTitle = (roleMeta.title || '').toLowerCase();
+          return roleTitle.includes(query) || baseTitle.includes(query) || key.includes(query);
         });
 
         if (matchedRoute) {
+          const roleMeta =
+            typeof navApi.getModuleMetaForRole === 'function'
+              ? navApi.getModuleMetaForRole(matchedRoute, currentSession.role)
+              : navApi.MODULE_META[matchedRoute];
           navigateTo(matchedRoute);
-          showToast(`Exibindo módulo "${navApi.MODULE_META[matchedRoute].title}" correspondente à pesquisa.`);
+          showToast(`Exibindo módulo "${roleMeta.title}" correspondente à pesquisa.`);
           return;
         }
 

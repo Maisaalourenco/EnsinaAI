@@ -13,6 +13,7 @@
     stage: 'todos',
     shift: 'todos',
     origin: 'todos',
+    attendant: 'todos',
     period: 'todos',
     page: 1,
     pageSize: 6
@@ -72,18 +73,50 @@
     return allOption + options;
   }
 
+  function buildAttendantOptions(attendants, selectedVal, includeAllLabel) {
+    const allOption = includeAllLabel
+      ? `<option value="todos"${selectedVal === 'todos' ? ' selected' : ''}>${escapeHtml(includeAllLabel)}</option>`
+      : '';
+    const options = attendants
+      .map(
+        (name) =>
+          `<option value="${escapeHtml(name)}"${
+            selectedVal === name ? ' selected' : ''
+          }>${escapeHtml(name)}</option>`
+      )
+      .join('');
+    return allOption + options;
+  }
+
   function renderLeadsModule(container, options = {}) {
     const service = globalScope.EnsinaAiLeadsService;
     const components = globalScope.EnsinaAiCrmComponents;
     if (!container || !service) return;
 
-    const session = options.session || { name: 'Equipe CRM (Demo)', roleLabel: 'Gestor Escolar' };
+    const session = options.session || {
+      role: 'gestor',
+      name: 'Coordenação Demo',
+      roleLabel: 'Gestor Escolar'
+    };
+    const isAtendente = session.role === 'atendente';
+    const scopedOwner = isAtendente ? (session.name || 'Secretaria Demo') : 'todos';
     const actorName = `${session.name} (${session.roleLabel})`;
     const notify = typeof options.onToast === 'function' ? options.onToast : () => {};
+    const onNavigateModule =
+      typeof options.onNavigateModule === 'function' ? options.onNavigateModule : null;
+    const onOpenAtendimentos =
+      typeof options.onOpenAtendimentos === 'function'
+        ? options.onOpenAtendimentos
+        : onNavigateModule
+          ? (ctx) => onNavigateModule('atendimentos', ctx)
+          : null;
 
     const state = {
       filters: {
         ...DEFAULT_FILTERS,
+        attendant: scopedOwner,
+        unassignedOnly: !isAtendente && Boolean(options.initialUnassigned),
+        withoutAttendance: !isAtendente && Boolean(options.initialWithoutAttendance),
         search: String(options.initialSearch || '').trim()
       },
       editingLeadId: null,
@@ -97,19 +130,32 @@
         <section class="crm-leads-header-bar">
           <div>
             <div class="crm-leads-title-row">
-              <h2>Leads</h2>
-              <span class="crm-demo-pill">Persistência local demonstrativa</span>
+              <h2>${isAtendente ? 'Meus Leads' : 'Gestão de Leads'}</h2>
+              <span class="crm-demo-pill">Dados demonstrativos locais</span>
             </div>
             <p class="crm-leads-subtitle">
-              Gerencie famílias interessadas em matrículas, aplique filtros combinados, atualize status e acompanhe atendimentos e visitas.
+              ${
+                isAtendente
+                  ? 'Acompanhe os leads da sua carteira, registre interações, agende visitas e atualize o avanço no funil.'
+                  : 'Gerencie toda a base de leads da escola, distribua responsáveis, identifique pendências sem atendimento e acompanhe conversões.'
+              }
             </p>
           </div>
           <div class="crm-leads-header-actions">
             <button type="button" class="btn btn-primary" id="btn-new-lead">
-              + Novo lead
+              Novo lead
             </button>
           </div>
         </section>
+
+        ${
+          isAtendente
+            ? `<section class="crm-role-scope-banner" id="leads-role-scope-banner" aria-label="Escopo da carteira">
+                <strong>Carteira operacional:</strong>
+                <span>Exibindo apenas os leads atribuídos a ${escapeHtml(scopedOwner)}. Distribuição e redistribuição de equipe ficam disponíveis no perfil Gestor Escolar.</span>
+              </section>`
+            : `<section class="crm-distribution-panel" id="leads-distribution-panel" aria-label="Distribuição de leads"></section>`
+        }
 
         <!-- Indicadores Rápidos -->
         <section class="crm-leads-kpi-row" id="leads-kpi-row" aria-label="Indicadores de leads">
@@ -118,14 +164,14 @@
 
         <!-- Barra de Pesquisa e Filtros -->
         <section class="crm-filters-card" aria-label="Pesquisa e filtros de leads">
-          <div class="crm-filters-grid">
+          <div class="crm-filters-grid crm-leads-filters-grid">
             <div class="crm-filter-field crm-filter-search">
-              <label for="leads-search-input">Pesquisar (nome, telefone ou e-mail)</label>
+              <label for="leads-search-input">Pesquisar (responsável, aluno ou telefone)</label>
               <input
                 type="search"
                 id="leads-search-input"
                 class="form-control crm-input-compact"
-                placeholder="Ex.: Mariana, (11) 98765 ou @exemplo.com"
+                placeholder="Ex.: Mariana, Sofia ou (11) 98765"
                 value="${escapeHtml(state.filters.search)}"
               />
             </div>
@@ -138,16 +184,9 @@
             </div>
 
             <div class="crm-filter-field">
-              <label for="leads-filter-stage">Etapa de ensino</label>
+              <label for="leads-filter-stage">Etapa escolar</label>
               <select id="leads-filter-stage" class="form-control crm-input-compact">
                 ${buildSelectOptions(service.CATALOGS.stages, state.filters.stage, 'Todas as etapas')}
-              </select>
-            </div>
-
-            <div class="crm-filter-field">
-              <label for="leads-filter-shift">Turno</label>
-              <select id="leads-filter-shift" class="form-control crm-input-compact">
-                ${buildSelectOptions(service.CATALOGS.shifts, state.filters.shift, 'Todos os turnos')}
               </select>
             </div>
 
@@ -155,6 +194,20 @@
               <label for="leads-filter-origin">Origem</label>
               <select id="leads-filter-origin" class="form-control crm-input-compact">
                 ${buildSelectOptions(service.CATALOGS.origins, state.filters.origin, 'Todas as origens')}
+              </select>
+            </div>
+
+            <div class="crm-filter-field" id="leads-filter-attendant-wrap"${isAtendente ? ' hidden' : ''}>
+              <label for="leads-filter-attendant">Atendente</label>
+              <select id="leads-filter-attendant" class="form-control crm-input-compact">
+                ${buildAttendantOptions(service.CATALOGS.attendants, state.filters.attendant, 'Todos os atendentes')}
+              </select>
+            </div>
+
+            <div class="crm-filter-field">
+              <label for="leads-filter-shift">Turno de interesse</label>
+              <select id="leads-filter-shift" class="form-control crm-input-compact">
+                ${buildSelectOptions(service.CATALOGS.shifts, state.filters.shift, 'Todos os turnos')}
               </select>
             </div>
 
@@ -183,14 +236,13 @@
             <table class="crm-table crm-leads-table">
               <thead>
                 <tr>
-                  <th>Responsável</th>
-                  <th>Aluno(a)</th>
+                  <th>Nome do responsável</th>
+                  <th>Nome do aluno</th>
                   <th>Telefone</th>
                   <th>E-mail</th>
-                  <th>Etapa de ensino</th>
-                  <th>Turno de interesse</th>
+                  <th>Etapa escolar</th>
                   <th>Origem</th>
-                  <th>Responsável pelo atendimento</th>
+                  <th>Atendente responsável</th>
                   <th>Status</th>
                   <th>Data de cadastro</th>
                   <th class="crm-th-actions">Ações</th>
@@ -323,7 +375,7 @@
 
                   <div class="form-group">
                     <label for="lead-field-origin" class="form-label">
-                      <span>Origem <span class="required-star" aria-hidden="true">*</span></span>
+                      <span>Origem do contato <span class="required-star" aria-hidden="true">*</span></span>
                     </label>
                     <select id="lead-field-origin" class="form-control crm-input-compact" required aria-describedby="error-lead-origin">
                       ${buildSelectOptions(service.CATALOGS.origins, 'site', '')}
@@ -333,7 +385,7 @@
 
                   <div class="form-group">
                     <label for="lead-field-stage" class="form-label">
-                      <span>Etapa de ensino <span class="required-star" aria-hidden="true">*</span></span>
+                      <span>Etapa escolar <span class="required-star" aria-hidden="true">*</span></span>
                     </label>
                     <select id="lead-field-stage" class="form-control crm-input-compact" required aria-describedby="error-lead-stage">
                       <option value="">Selecione a etapa...</option>
@@ -344,7 +396,7 @@
 
                   <div class="form-group">
                     <label for="lead-field-shift" class="form-label">
-                      <span>Turno desejado <span class="required-star" aria-hidden="true">*</span></span>
+                      <span>Turno de interesse <span class="required-star" aria-hidden="true">*</span></span>
                     </label>
                     <select id="lead-field-shift" class="form-control crm-input-compact" required aria-describedby="error-lead-shift">
                       <option value="">Selecione o turno...</option>
@@ -352,18 +404,38 @@
                     </select>
                     <span class="form-error-msg" id="error-lead-shift" role="alert"></span>
                   </div>
+
+                  <div class="form-group">
+                    <label for="lead-field-attendant" class="form-label">
+                      <span>Responsável pelo atendimento <span class="required-star" aria-hidden="true">*</span></span>
+                    </label>
+                    <select id="lead-field-attendant" class="form-control crm-input-compact" required aria-describedby="error-lead-attendant">
+                      ${isAtendente ? '' : '<option value="Aguardando atribuição">Aguardando atribuição</option>'}
+                      ${buildAttendantOptions(service.CATALOGS.attendants, isAtendente ? scopedOwner : 'Secretaria Demo', '')}
+                    </select>
+                    <span class="form-error-msg" id="error-lead-attendant" role="alert"></span>
+                  </div>
+
+                  <div class="form-group" id="lead-field-status-group" hidden>
+                    <label for="lead-field-status" class="form-label">
+                      <span>Status do lead</span>
+                    </label>
+                    <select id="lead-field-status" class="form-control crm-input-compact">
+                      ${buildSelectOptions(service.CATALOGS.statuses, 'novo', '')}
+                    </select>
+                  </div>
                 </div>
 
                 <div class="form-group">
                   <label for="lead-field-message" class="form-label">
-                    <span>Mensagem</span>
+                    <span>Mensagem ou observação do contato</span>
                   </label>
                   <textarea
                     id="lead-field-message"
                     class="form-control form-textarea"
                     rows="2"
                     maxlength="500"
-                    placeholder="Mensagem ou dúvida inicial enviada pelo responsável..."
+                    placeholder="Mensagem inicial ou observação registrada para o contato..."
                     aria-describedby="error-lead-message"
                   ></textarea>
                   <span class="form-error-msg" id="error-lead-message" role="alert"></span>
@@ -371,7 +443,7 @@
 
                 <div class="form-group">
                   <label for="lead-field-notes" class="form-label">
-                    <span>Observações internas</span>
+                    <span>Observações internas da equipe</span>
                   </label>
                   <textarea
                     id="lead-field-notes"
@@ -484,11 +556,13 @@
 
     // Referências principais da tela
     const kpiRowEl = container.querySelector('#leads-kpi-row');
+    const distributionPanelEl = container.querySelector('#leads-distribution-panel');
     const searchInput = container.querySelector('#leads-search-input');
     const statusSelect = container.querySelector('#leads-filter-status');
     const stageSelect = container.querySelector('#leads-filter-stage');
     const shiftSelect = container.querySelector('#leads-filter-shift');
     const originSelect = container.querySelector('#leads-filter-origin');
+    const attendantSelect = container.querySelector('#leads-filter-attendant');
     const periodSelect = container.querySelector('#leads-filter-period');
     const clearFiltersBtn = container.querySelector('#btn-clear-lead-filters');
     const resultsCounterEl = container.querySelector('#leads-results-counter');
@@ -508,6 +582,9 @@
     const formSubtitle = container.querySelector('#lead-form-modal-subtitle');
     const crudForm = container.querySelector('#lead-crud-form');
     const saveLeadBtn = container.querySelector('#btn-save-lead');
+
+    const statusGroupEl = container.querySelector('#lead-field-status-group');
+    const formStatusSelect = container.querySelector('#lead-field-status');
 
     const formFields = {
       parentName: {
@@ -572,17 +649,22 @@
       stage: {
         input: container.querySelector('#lead-field-stage'),
         error: container.querySelector('#error-lead-stage'),
-        validate: (v) => (!v ? 'Selecione a etapa de ensino.' : '')
+        validate: (v) => (!v ? 'Selecione a etapa escolar.' : '')
       },
       shift: {
         input: container.querySelector('#lead-field-shift'),
         error: container.querySelector('#error-lead-shift'),
-        validate: (v) => (!v ? 'Selecione o turno desejado.' : '')
+        validate: (v) => (!v ? 'Selecione o turno de interesse.' : '')
       },
       origin: {
         input: container.querySelector('#lead-field-origin'),
         error: container.querySelector('#error-lead-origin'),
-        validate: (v) => (!v ? 'Selecione a origem do lead.' : '')
+        validate: (v) => (!v ? 'Selecione a origem do contato.' : '')
+      },
+      attendant: {
+        input: container.querySelector('#lead-field-attendant'),
+        error: container.querySelector('#error-lead-attendant'),
+        validate: (v) => (!v ? 'Selecione o responsável pelo atendimento.' : '')
       },
       message: {
         input: container.querySelector('#lead-field-message'),
@@ -658,14 +740,36 @@
     }
 
     function renderKpis() {
-      const stats = service.getStats();
+      const stats = service.getStats(isAtendente ? { attendant: scopedOwner } : {});
+      if (distributionPanelEl && !isAtendente) {
+        const noAtendCount = service.listLeads({ withoutAttendance: true, pageSize: 500 }).total;
+        distributionPanelEl.innerHTML = `
+          <div class="crm-distribution-head">
+            <div>
+              <strong>Distribuição e triagem de leads</strong>
+              <span>Filtre rapidamente leads pendentes de atribuição ou sem atendimento inicial registrado.</span>
+            </div>
+            <div class="crm-quick-chips" role="group" aria-label="Atalhos de triagem gerencial">
+              <button type="button" class="crm-quick-chip${!state.filters.unassignedOnly && !state.filters.withoutAttendance ? ' is-active' : ''}" data-dist-filter="all">
+                Todos (${stats.total})
+              </button>
+              <button type="button" class="crm-quick-chip${state.filters.unassignedOnly ? ' is-active' : ''}" data-dist-filter="unassigned">
+                Sem responsável (${stats.semResponsavel})
+              </button>
+              <button type="button" class="crm-quick-chip${state.filters.withoutAttendance ? ' is-active' : ''}" data-dist-filter="no-attendance">
+                Sem atendimento (${noAtendCount})
+              </button>
+            </div>
+          </div>
+        `;
+      }
       if (components && typeof components.renderKpiCard === 'function') {
         kpiRowEl.innerHTML = [
           components.renderKpiCard({
-            label: 'Total de leads',
+            label: isAtendente ? 'Meus leads' : 'Total de leads',
             value: String(stats.total),
             valueId: 'leads-stat-total',
-            foot: 'Base local demonstrativa',
+            foot: isAtendente ? `Carteira de ${scopedOwner}` : `${stats.semResponsavel} aguardando atribuição`,
             accent: 'navy'
           }),
           components.renderKpiCard({
@@ -676,19 +780,27 @@
             accent: 'blue'
           }),
           components.renderKpiCard({
-            label: 'Em atendimento',
+            label: 'Leads em atendimento',
             value: String(stats.emAtendimento),
             valueId: 'leads-stat-active',
-            foot: 'Contato, retorno e visitas',
+            foot: 'Em contato, retorno e visitas',
             accent: 'sky'
           }),
           components.renderKpiCard({
-            label: 'Matrículas realizadas',
+            label: 'Leads matriculados',
             value: String(stats.concluidos),
             valueId: 'leads-stat-converted',
-            foot: 'Convertidos (demo)',
+            foot: 'Matrículas confirmadas (demo)',
             footTone: 'is-positive',
             accent: 'green'
+          }),
+          components.renderKpiCard({
+            label: 'Leads perdidos',
+            value: String(stats.perdidos),
+            valueId: 'leads-stat-lost',
+            foot: 'Sem avanço no funil',
+            footTone: 'is-warning',
+            accent: 'red'
           })
         ].join('');
         return;
@@ -706,14 +818,19 @@
           <span class="crm-kpi-foot">Aguardando primeiro contato</span>
         </article>
         <article class="crm-kpi-card accent-sky">
-          <span class="crm-kpi-label">Em atendimento</span>
+          <span class="crm-kpi-label">Leads em atendimento</span>
           <strong class="crm-kpi-value" id="leads-stat-active">${stats.emAtendimento}</strong>
-          <span class="crm-kpi-foot">Contato, retorno e visitas</span>
+          <span class="crm-kpi-foot">Em contato, retorno e visitas</span>
         </article>
         <article class="crm-kpi-card accent-green">
-          <span class="crm-kpi-label">Matrículas realizadas</span>
+          <span class="crm-kpi-label">Leads matriculados</span>
           <strong class="crm-kpi-value" id="leads-stat-converted">${stats.concluidos}</strong>
-          <span class="crm-kpi-foot is-positive">Convertidos (demo)</span>
+          <span class="crm-kpi-foot is-positive">Matrículas confirmadas (demo)</span>
+        </article>
+        <article class="crm-kpi-card accent-red">
+          <span class="crm-kpi-label">Leads perdidos</span>
+          <strong class="crm-kpi-value" id="leads-stat-lost">${stats.perdidos}</strong>
+          <span class="crm-kpi-foot is-warning">Sem avanço no funil</span>
         </article>
       `;
     }
@@ -768,6 +885,9 @@
           state.filters.stage !== 'todos' ||
           state.filters.shift !== 'todos' ||
           state.filters.origin !== 'todos' ||
+          (!isAtendente && state.filters.attendant !== 'todos') ||
+          Boolean(state.filters.unassignedOnly) ||
+          Boolean(state.filters.withoutAttendance) ||
           state.filters.period !== 'todos';
 
         if (result.allStoredCount === 0) {
@@ -796,8 +916,21 @@
       resultsCounterEl.textContent = `Mostrando ${start}–${end} de ${result.total} lead(s)`;
 
       tbodyEl.innerHTML = result.items
-        .map(
-          (lead) => `
+        .map((lead) => {
+          const currentOwner = lead.atendente || 'Aguardando atribuição';
+          const ownerCellHtml = isAtendente
+            ? escapeHtml(currentOwner)
+            : `<select
+                  class="form-control crm-input-compact crm-inline-attendant-select${currentOwner === 'Aguardando atribuição' ? ' is-unassigned' : ''}"
+                  data-action="inline-attendant"
+                  data-id="${escapeHtml(lead.id)}"
+                  aria-label="Atribuir responsável para ${escapeHtml(lead.nome_responsavel)}"
+                >
+                  <option value="Aguardando atribuição"${currentOwner === 'Aguardando atribuição' ? ' selected' : ''}>Aguardando atribuição</option>
+                  ${buildAttendantOptions(service.CATALOGS.attendants, currentOwner, '')}
+                </select>`;
+
+          return `
             <tr data-lead-id="${escapeHtml(lead.id)}">
               <td>
                 <div class="crm-lead-primary-cell">
@@ -808,20 +941,29 @@
               <td>${lead.nome_aluno ? escapeHtml(lead.nome_aluno) : '<span class="crm-muted-dash">—</span>'}</td>
               <td class="crm-nowrap">${escapeHtml(service.formatPhone(lead.telefone))}</td>
               <td>${escapeHtml(lead.email)}</td>
-              <td>${escapeHtml(service.getStageLabel(lead.etapa_codigo))}</td>
-              <td>${escapeHtml(service.getShiftLabel(lead.turno_codigo))}</td>
-              <td>${escapeHtml(service.getOriginLabel(lead.origem))}</td>
-              <td>${escapeHtml(lead.atendente || 'Aguardando atribuição')}</td>
               <td>
-                <span class="crm-status-badge status-${escapeHtml(lead.status)}">
-                  ${escapeHtml(service.getStatusLabel(lead.status))}
-                </span>
+                <div class="crm-lead-primary-cell">
+                  <span>${escapeHtml(service.getStageLabel(lead.etapa_codigo))}</span>
+                  <small>Turno: ${escapeHtml(service.getShiftLabel(lead.turno_codigo))}</small>
+                </div>
+              </td>
+              <td>${escapeHtml(service.getOriginLabel(lead.origem))}</td>
+              <td>${ownerCellHtml}</td>
+              <td>
+                <select
+                  class="crm-status-badge crm-status-select status-${escapeHtml(lead.status)}"
+                  data-action="inline-status"
+                  data-id="${escapeHtml(lead.id)}"
+                  aria-label="Alterar status de ${escapeHtml(lead.nome_responsavel)}"
+                >
+                  ${buildSelectOptions(service.CATALOGS.statuses, lead.status, '')}
+                </select>
               </td>
               <td class="crm-nowrap">${escapeHtml(formatDateShortBr(lead.criado_em))}</td>
               <td class="crm-td-actions">
                 <div class="crm-table-actions">
                   <button type="button" class="crm-table-btn" data-action="detail" data-id="${escapeHtml(lead.id)}">
-                    Detalhes
+                    Visualizar
                   </button>
                   <button type="button" class="crm-table-btn" data-action="edit" data-id="${escapeHtml(lead.id)}">
                     Editar
@@ -832,8 +974,8 @@
                 </div>
               </td>
             </tr>
-          `
-        )
+          `;
+        })
         .join('');
 
       renderPagination(result.page, result.totalPages);
@@ -849,7 +991,7 @@
       if (leadToEdit) {
         state.editingLeadId = leadToEdit.id;
         formTitle.textContent = `Editar lead (${leadToEdit.id})`;
-        formSubtitle.textContent = 'Atualize as informações cadastrais e de interesse.';
+        formSubtitle.textContent = 'Atualize as informações cadastrais, responsável e status.';
         saveLeadBtn.textContent = 'Salvar alterações';
 
         formFields.parentName.input.value = leadToEdit.nome_responsavel || '';
@@ -863,6 +1005,16 @@
         formFields.stage.input.value = leadToEdit.etapa_codigo || '';
         formFields.shift.input.value = leadToEdit.turno_codigo || '';
         formFields.origin.input.value = leadToEdit.origem || 'site';
+        if (formFields.attendant && formFields.attendant.input) {
+          formFields.attendant.input.value = isAtendente
+            ? scopedOwner
+            : leadToEdit.atendente || 'Aguardando atribuição';
+          formFields.attendant.input.disabled = isAtendente;
+        }
+        if (statusGroupEl && formStatusSelect) {
+          statusGroupEl.hidden = false;
+          formStatusSelect.value = leadToEdit.status || 'novo';
+        }
         formFields.message.input.value = leadToEdit.mensagem || '';
         formFields.notes.input.value = leadToEdit.observacoes || '';
         formFields.consent.input.checked = leadToEdit.consentimento_contato !== false;
@@ -870,8 +1022,21 @@
         state.editingLeadId = null;
         formTitle.textContent = 'Novo lead';
         formSubtitle.textContent = 'Preencha os dados de contato e interesse escolar.';
-        saveLeadBtn.textContent = 'Cadastrar lead';
+        saveLeadBtn.textContent = 'Salvar lead';
         formFields.origin.input.value = 'site';
+        if (formFields.attendant && formFields.attendant.input) {
+          const preferred = isAtendente
+            ? scopedOwner
+            : service.CATALOGS.attendants.includes(session.name)
+              ? session.name
+              : 'Secretaria Demo';
+          formFields.attendant.input.value = preferred;
+          formFields.attendant.input.disabled = isAtendente;
+        }
+        if (statusGroupEl && formStatusSelect) {
+          statusGroupEl.hidden = true;
+          formStatusSelect.value = 'novo';
+        }
         formFields.consent.input.checked = false;
       }
 
@@ -973,6 +1138,19 @@
 
       const consentLabel = lead.consentimento_contato !== false ? 'Confirmado' : 'Não confirmado';
 
+      const atendService = globalScope.EnsinaAiAtendimentosService || null;
+      const leadAtendCount = atendService && typeof atendService.listAtendimentos === 'function'
+        ? atendService.listAtendimentos({ leadId: lead.id, pageSize: 500 }).total
+        : 0;
+      const tarefasService = globalScope.EnsinaAiTarefasService || null;
+      const leadTarefasCount = tarefasService && typeof tarefasService.listTarefas === 'function'
+        ? tarefasService.listTarefas({ leadId: lead.id, pageSize: 500 }).total
+        : 0;
+      const visitasService = globalScope.EnsinaAiVisitasService || null;
+      const leadVisitasCount = visitasService && typeof visitasService.listVisitas === 'function'
+        ? visitasService.listVisitas({ leadId: lead.id, pageSize: 500 }).total
+        : 0;
+
       detailBody.innerHTML = `
         ${renderQuickContactActions(lead)}
 
@@ -1021,6 +1199,48 @@
               ${visitInfoRow}
             </dl>
 
+            ${
+              onOpenAtendimentos || onNavigateModule
+                ? `
+              <div class="crm-detail-inline-action">
+                <label>Módulos integrados</label>
+                <div class="crm-detail-module-links">
+                  ${
+                    onOpenAtendimentos
+                      ? `
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-detail-open-atendimentos">
+                      Ver atendimentos (${leadAtendCount})
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-detail-new-atendimento">
+                      + Novo atendimento
+                    </button>
+                  `
+                      : ''
+                  }
+                  ${
+                    onNavigateModule
+                      ? `
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-detail-open-tarefas">
+                      Ver tarefas (${leadTarefasCount})
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-detail-new-tarefa">
+                      + Nova tarefa
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-detail-open-visitas">
+                      Ver visitas (${leadVisitasCount})
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-detail-new-visita">
+                      + Agendar visita
+                    </button>
+                  `
+                      : ''
+                  }
+                </div>
+              </div>
+            `
+                : ''
+            }
+
             <div class="crm-detail-inline-action">
               <label for="detail-status-select">Alterar status</label>
               <div class="crm-detail-inline-row">
@@ -1030,6 +1250,21 @@
                 <button type="button" class="btn btn-secondary btn-sm" id="btn-detail-apply-status">Aplicar</button>
               </div>
             </div>
+
+            ${
+              !isAtendente
+                ? `<div class="crm-detail-inline-action">
+                    <label for="detail-attendant-select">Atribuir / redistribuir responsável</label>
+                    <div class="crm-detail-inline-row">
+                      <select id="detail-attendant-select" class="form-control crm-input-compact">
+                        <option value="Aguardando atribuição"${(lead.atendente || 'Aguardando atribuição') === 'Aguardando atribuição' ? ' selected' : ''}>Aguardando atribuição</option>
+                        ${buildAttendantOptions(service.CATALOGS.attendants, lead.atendente || '', '')}
+                      </select>
+                      <button type="button" class="btn btn-outline btn-sm" id="btn-detail-apply-attendant">Atribuir</button>
+                    </div>
+                  </div>`
+                : ''
+            }
 
             <div class="crm-detail-inline-action">
               <label for="detail-visit-datetime">Agendar visita presencial</label>
@@ -1115,6 +1350,54 @@
         </section>
       `;
 
+      const openAtendimentosBtn = detailBody.querySelector('#btn-detail-open-atendimentos');
+      if (openAtendimentosBtn && onOpenAtendimentos) {
+        openAtendimentosBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onOpenAtendimentos({ leadId: lead.id, autoOpenNewModal: false });
+        });
+      }
+
+      const newAtendimentoBtn = detailBody.querySelector('#btn-detail-new-atendimento');
+      if (newAtendimentoBtn && onOpenAtendimentos) {
+        newAtendimentoBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onOpenAtendimentos({ leadId: lead.id, autoOpenNewModal: true });
+        });
+      }
+
+      const openTarefasBtn = detailBody.querySelector('#btn-detail-open-tarefas');
+      if (openTarefasBtn && onNavigateModule) {
+        openTarefasBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onNavigateModule('tarefas', { leadId: lead.id, autoOpenNewModal: false });
+        });
+      }
+
+      const newTarefaBtn = detailBody.querySelector('#btn-detail-new-tarefa');
+      if (newTarefaBtn && onNavigateModule) {
+        newTarefaBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onNavigateModule('tarefas', { leadId: lead.id, autoOpenNewModal: true });
+        });
+      }
+
+      const openVisitasBtn = detailBody.querySelector('#btn-detail-open-visitas');
+      if (openVisitasBtn && onNavigateModule) {
+        openVisitasBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onNavigateModule('visitas', { leadId: lead.id, autoOpenNewModal: false });
+        });
+      }
+
+      const newVisitaBtn = detailBody.querySelector('#btn-detail-new-visita');
+      if (newVisitaBtn && onNavigateModule) {
+        newVisitaBtn.addEventListener('click', () => {
+          closeDetailModal(false);
+          onNavigateModule('visitas', { leadId: lead.id, autoOpenNewModal: true });
+        });
+      }
+
       const applyStatusBtn = detailBody.querySelector('#btn-detail-apply-status');
       const statusSel = detailBody.querySelector('#detail-status-select');
       if (applyStatusBtn && statusSel) {
@@ -1124,6 +1407,19 @@
             renderDetailModalContent(updated);
             renderTableAndSummary();
             notify(`Status de "${updated.nome_responsavel}" atualizado para ${service.getStatusLabel(updated.status)}.`);
+          }
+        });
+      }
+
+      const applyAttendantBtn = detailBody.querySelector('#btn-detail-apply-attendant');
+      const attendantModalSel = detailBody.querySelector('#detail-attendant-select');
+      if (applyAttendantBtn && attendantModalSel && !isAtendente) {
+        applyAttendantBtn.addEventListener('click', () => {
+          const updated = service.reassignLead(lead.id, attendantModalSel.value, actorName);
+          if (updated) {
+            renderDetailModalContent(updated);
+            renderTableAndSummary();
+            notify(`Responsável de "${updated.nome_responsavel}" alterado para ${updated.atendente}.`);
           }
         });
       }
@@ -1251,14 +1547,36 @@
     }
 
     function resetAllFilters() {
-      state.filters = { ...DEFAULT_FILTERS };
+      state.filters = {
+        ...DEFAULT_FILTERS,
+        attendant: isAtendente ? scopedOwner : 'todos',
+        unassignedOnly: false,
+        withoutAttendance: false
+      };
       searchInput.value = '';
       statusSelect.value = 'todos';
       stageSelect.value = 'todos';
       shiftSelect.value = 'todos';
       originSelect.value = 'todos';
+      if (attendantSelect) attendantSelect.value = state.filters.attendant;
       periodSelect.value = 'todos';
       renderTableAndSummary();
+    }
+
+    if (distributionPanelEl && !isAtendente) {
+      distributionPanelEl.addEventListener('click', (e) => {
+        const chip = e.target.closest('button[data-dist-filter]');
+        if (!chip) return;
+        const mode = chip.getAttribute('data-dist-filter');
+        state.filters.unassignedOnly = mode === 'unassigned';
+        state.filters.withoutAttendance = mode === 'no-attendance';
+        if (mode === 'unassigned') {
+          state.filters.attendant = 'todos';
+          if (attendantSelect) attendantSelect.value = 'todos';
+        }
+        state.filters.page = 1;
+        renderTableAndSummary();
+      });
     }
 
     // Eventos de Filtros e Pesquisa
@@ -1273,8 +1591,10 @@
       [stageSelect, 'stage'],
       [shiftSelect, 'shift'],
       [originSelect, 'origin'],
+      [attendantSelect, 'attendant'],
       [periodSelect, 'period']
     ].forEach(([el, key]) => {
+      if (!el) return;
       el.addEventListener('change', () => {
         state.filters[key] = el.value;
         state.filters.page = 1;
@@ -1313,6 +1633,31 @@
         if (lead) openFormModal(lead);
       } else if (action === 'delete') {
         openDeleteModal(leadId);
+      }
+    });
+
+    tbodyEl.addEventListener('change', (e) => {
+      const statusSel = e.target.closest('select[data-action="inline-status"][data-id]');
+      if (statusSel) {
+        const leadId = statusSel.getAttribute('data-id');
+        const nextStatus = statusSel.value;
+        const updated = service.changeLeadStatus(leadId, nextStatus, actorName);
+        if (updated) {
+          renderTableAndSummary();
+          notify(`Status de "${updated.nome_responsavel}" alterado para ${service.getStatusLabel(updated.status)}.`);
+        }
+        return;
+      }
+
+      const ownerSel = e.target.closest('select[data-action="inline-attendant"][data-id]');
+      if (ownerSel && !isAtendente) {
+        const leadId = ownerSel.getAttribute('data-id');
+        const nextOwner = ownerSel.value;
+        const updated = service.reassignLead(leadId, nextOwner, actorName);
+        if (updated) {
+          renderTableAndSummary();
+          notify(`Lead "${updated.nome_responsavel}" atribuído a ${updated.atendente}.`);
+        }
       }
     });
 
@@ -1361,6 +1706,7 @@
         etapa_codigo: formFields.stage.input.value,
         turno_codigo: formFields.shift.input.value,
         origem: formFields.origin.input.value,
+        atendente: formFields.attendant ? formFields.attendant.input.value : actorName,
         mensagem: formFields.message.input.value.trim(),
         observacoes: formFields.notes.input.value.trim(),
         consentimento_contato: Boolean(formFields.consent.input.checked)
@@ -1368,6 +1714,9 @@
 
       const editingId = state.editingLeadId;
       if (editingId) {
+        if (formStatusSelect && statusGroupEl && !statusGroupEl.hidden) {
+          payload.status = formStatusSelect.value;
+        }
         const updated = service.updateLead(editingId, payload, actorName);
         closeFormModal();
         renderTableAndSummary();

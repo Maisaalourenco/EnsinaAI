@@ -10,17 +10,21 @@
 
   const STORAGE_KEY = 'ensina_ai_crm_atendimentos_demo_v1';
 
+  /**
+   * ATENÇÃO: Catálogos e registros abaixo são dados demonstrativos locais (localStorage).
+   * A integração definitiva com banco de dados e back-end será feita em etapa posterior.
+   */
   const CATALOGS = Object.freeze({
     channels: [
       { codigo: 'whatsapp', label: 'WhatsApp' },
       { codigo: 'telefone', label: 'Telefone' },
       { codigo: 'email', label: 'E-mail' },
       { codigo: 'presencial', label: 'Presencial' },
-      { codigo: 'nota_interna', label: 'Nota interna' }
+      { codigo: 'outro', label: 'Outro' }
     ],
     statuses: [
+      { codigo: 'pendente', label: 'Pendente' },
       { codigo: 'em_andamento', label: 'Em andamento' },
-      { codigo: 'aguardando_retorno', label: 'Aguardando retorno' },
       { codigo: 'concluido', label: 'Concluído' },
       { codigo: 'cancelado', label: 'Cancelado' }
     ],
@@ -33,14 +37,32 @@
   });
 
   function isoOffsetDays(daysOffset, hours = 10, minutes = 0) {
-    const d = new Date();
+    const now = Date.now();
+    const d = new Date(now);
     d.setDate(d.getDate() + daysOffset);
     d.setHours(hours, minutes, 0, 0);
+    if (daysOffset === 0 && d.getTime() > now) {
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+      const elapsedMs = Math.max(0, now - startOfToday.getTime());
+      const ratio = Math.min(0.9, (hours * 60 + minutes) / (24 * 60));
+      return new Date(startOfToday.getTime() + Math.floor(elapsedMs * ratio)).toISOString();
+    }
     return d.toISOString();
   }
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
+  }
+
+  function normalizeChannelCode(code) {
+    if (code === 'nota_interna') return 'outro';
+    return code || 'whatsapp';
+  }
+
+  function normalizeStatusCode(code) {
+    if (code === 'aguardando_retorno') return 'pendente';
+    return code || 'pendente';
   }
 
   function getLabel(list, codigo, fallback = 'Não informado') {
@@ -49,11 +71,12 @@
   }
 
   function getChannelLabel(codigo) {
-    return getLabel(CATALOGS.channels, codigo);
+    if (codigo === 'nota_interna') return 'Nota interna';
+    return getLabel(CATALOGS.channels, normalizeChannelCode(codigo));
   }
 
   function getStatusLabel(codigo) {
-    return getLabel(CATALOGS.statuses, codigo);
+    return getLabel(CATALOGS.statuses, normalizeStatusCode(codigo));
   }
 
   function getLeadsService() {
@@ -110,6 +133,7 @@
         descricao: 'Contato inicial via WhatsApp para apresentar a proposta pedagógica do 2º ano e enviar calendário de visitas.',
         resultado: 'Família interessada em visita guiada nesta semana',
         proxima_acao: 'Confirmar horário de visita ao campus',
+        observacoes: 'Família prefere visita no período da manhã.',
         data_retorno: isoOffsetDays(-1, 16, 0),
         status: 'em_andamento',
         ultima_atualizacao: isoOffsetDays(0, 10, 5),
@@ -118,7 +142,7 @@
             id: 'HA-2001-2',
             tipo: 'whatsapp',
             titulo: 'Atendimento via WhatsApp',
-            descricao: 'Enviado material institucional e disponibilidade de horários para o turno matutino.',
+            descricao: 'Enviado material institucional e disponibilidade de horários para o turno da manhã.',
             autor: 'Secretaria Demo',
             criado_em: isoOffsetDays(0, 10, 5)
           },
@@ -140,7 +164,7 @@
         idade_aluno: 4,
         telefone: '11976541002',
         email: 'eduardo.ferreira@exemplo.com',
-        etapa_codigo: 'infantil_2_5',
+        etapa_codigo: 'educacao_infantil',
         turno_codigo: 'integral',
         origem: 'whatsapp',
         canal: 'telefone',
@@ -149,8 +173,9 @@
         descricao: 'Ligação realizada para detalhar alimentação, rotina de descanso e valores do Período Integral.',
         resultado: 'Responsável vai alinhar decisão em família',
         proxima_acao: 'Retornar ligação para confirmar agendamento de visita',
+        observacoes: 'Solicitou retorno após as 17h.',
         data_retorno: isoOffsetDays(-2, 14, 0),
-        status: 'aguardando_retorno',
+        status: 'pendente',
         ultima_atualizacao: isoOffsetDays(0, 12, 10),
         historico: [
           {
@@ -165,7 +190,7 @@
             id: 'HA-2002-1',
             tipo: 'telefone',
             titulo: 'Ligação telefônica',
-            descricao: 'Apresentada grade horária do Período Integral para Maternal.',
+            descricao: 'Apresentada grade horária do Período Integral para Educação Infantil.',
             autor: 'Ana Paula Mendes (Demo)',
             criado_em: isoOffsetDays(0, 11, 45)
           }
@@ -228,7 +253,8 @@
         resultado: 'Material recebido; aguardando confirmação de leitura',
         proxima_acao: 'Fazer follow-up via WhatsApp sobre o plano de estudos',
         data_retorno: isoOffsetDays(-1, 11, 0),
-        status: 'aguardando_retorno',
+        status: 'pendente',
+        observacoes: 'Responsável avaliando cronograma de simulados.',
         ultima_atualizacao: isoOffsetDays(-2, 16, 45),
         historico: [
           {
@@ -297,8 +323,9 @@
         descricao: 'Conversa pelo WhatsApp sobre rotas de transporte escolar parceiro e horários de entrada e saída.',
         resultado: 'Aguardando contato com empresa de transporte indicada',
         proxima_acao: 'Confirmar se a rota atende o endereço da família',
+        observacoes: 'Enviar telefones das duas linhas de transporte escolar.',
         data_retorno: isoOffsetDays(2, 14, 30),
-        status: 'aguardando_retorno',
+        status: 'pendente',
         ultima_atualizacao: isoOffsetDays(-4, 16, 15),
         historico: [
           {
@@ -319,15 +346,16 @@
         idade_aluno: 3,
         telefone: '11976781008',
         email: 'larissa.campos@exemplo.com',
-        etapa_codigo: 'infantil_2_5',
-        turno_codigo: 'vespertino',
+        etapa_codigo: 'educacao_infantil',
+        turno_codigo: 'tarde',
         origem: 'instagram',
-        canal: 'nota_interna',
+        canal: 'outro',
         responsavel_atendimento: 'Ana Paula Mendes (Demo)',
         data_hora: isoOffsetDays(-5, 14, 0),
-        descricao: 'Alinhamento interno com coordenação da Educação Infantil para preparar sala de aula modelo durante a visita.',
+        descricao: 'Alinhamento via aplicativo escolar com coordenação da Educação Infantil para preparar sala modelo durante a visita.',
         resultado: 'Sala e equipe pedagógica reservadas para visita',
         proxima_acao: 'Recepcionar família na visita guiada',
+        observacoes: 'Confirmar presença da coordenadora pedagógica.',
         data_retorno: isoOffsetDays(1, 15, 0),
         status: 'em_andamento',
         ultima_atualizacao: isoOffsetDays(-5, 14, 10),
@@ -390,8 +418,9 @@
         descricao: 'Contato telefônico com o pai para verificar disponibilidade de visita no 9º ano.',
         resultado: 'Pai pediu retorno na próxima semana por viagem a trabalho',
         proxima_acao: 'Ligar novamente para fechar horário de visita',
+        observacoes: 'Pai retornará de viagem na próxima segunda-feira.',
         data_retorno: isoOffsetDays(-3, 9, 30),
-        status: 'aguardando_retorno',
+        status: 'pendente',
         ultima_atualizacao: isoOffsetDays(-12, 17, 30),
         historico: [
           {
@@ -446,14 +475,17 @@
     return {
       ...snap,
       id: String(item.id || ''),
-      canal: String(item.canal || 'whatsapp'),
+      nome_responsavel: String(item.nome_responsavel || snap.nome_responsavel).trim(),
+      nome_aluno: String(item.nome_aluno ?? snap.nome_aluno ?? '').trim(),
+      canal: normalizeChannelCode(String(item.canal || 'whatsapp')),
       responsavel_atendimento: String(item.responsavel_atendimento || 'Secretaria Demo'),
       data_hora: item.data_hora || new Date().toISOString(),
       descricao: String(item.descricao || '').trim(),
       resultado: String(item.resultado || '').trim(),
       proxima_acao: String(item.proxima_acao || '').trim(),
+      observacoes: String(item.observacoes || '').trim(),
       data_retorno: item.data_retorno || '',
-      status: String(item.status || 'em_andamento'),
+      status: normalizeStatusCode(String(item.status || 'pendente')),
       ultima_atualizacao: item.ultima_atualizacao || item.data_hora || new Date().toISOString(),
       historico: Array.isArray(item.historico) ? item.historico : []
     };
@@ -532,12 +564,25 @@
     return Array.from(map.values());
   }
 
+  function matchOwner(a, b) {
+    const eqSvc = globalScope.EnsinaAiEquipeService;
+    if (eqSvc && typeof eqSvc.matchOwnerName === 'function') {
+      return eqSvc.matchOwnerName(a, b);
+    }
+    const cleanA = String(a || '').replace(/\s*\(demo\)\s*/gi, '').trim().toLowerCase();
+    const cleanB = String(b || '').replace(/\s*\(demo\)\s*/gi, '').trim().toLowerCase();
+    return Boolean(cleanA && cleanB && cleanA === cleanB);
+  }
+
   function listAtendimentos(filters = {}) {
     const all = readFromStorage();
     const searchRaw = String(filters.search || '').trim().toLowerCase();
     const searchDigits = searchRaw.replace(/\D/g, '');
 
     const filtered = all.filter((item) => {
+      if (filters.leadId && item.lead_id !== filters.leadId) {
+        return false;
+      }
       if (filters.status && filters.status !== 'todos' && item.status !== filters.status) {
         return false;
       }
@@ -547,7 +592,7 @@
       if (
         filters.attendant &&
         filters.attendant !== 'todos' &&
-        item.responsavel_atendimento !== filters.attendant
+        !matchOwner(item.responsavel_atendimento, filters.attendant)
       ) {
         return false;
       }
@@ -565,6 +610,7 @@
           item.descricao,
           item.proxima_acao,
           item.resultado,
+          item.observacoes,
           item.email
         ]
           .join(' ')
@@ -598,14 +644,19 @@
     };
   }
 
-  function getStats() {
+  function getStats(filters = {}) {
     const all = readFromStorage();
-    const total = all.length;
-    const emAndamento = all.filter((a) => a.status === 'em_andamento').length;
-    const aguardandoRetorno = all.filter((a) => a.status === 'aguardando_retorno').length;
-    const concluidos = all.filter((a) => a.status === 'concluido').length;
+    const scoped =
+      filters && filters.attendant && filters.attendant !== 'todos'
+        ? all.filter((a) => matchOwner(a.responsavel_atendimento, filters.attendant))
+        : all;
+    const total = scoped.length;
+    const realizadosHoje = scoped.filter((a) => matchesPeriod(a.data_hora, 'hoje')).length;
+    const pendentes = scoped.filter((a) => a.status === 'pendente').length;
+    const emAndamento = scoped.filter((a) => a.status === 'em_andamento').length;
+    const concluidos = scoped.filter((a) => a.status === 'concluido').length;
 
-    return { total, emAndamento, aguardandoRetorno, concluidos };
+    return { total, realizadosHoje, pendentes, emAndamento, concluidos };
   }
 
   function getAttendantSummary(attendantName, session = { role: 'gestor', roleLabel: 'Gestor Escolar' }) {
@@ -640,7 +691,7 @@
 
     const atendimentosRealizados = myAtendimentos.length;
     const atendimentosPendentes = myAtendimentos.filter((a) =>
-      ['em_andamento', 'aguardando_retorno'].includes(a.status)
+      ['em_andamento', 'pendente'].includes(a.status)
     ).length;
     const retornosAtrasados = myAtendimentos.filter((a) => isReturnOverdue(a)).length;
 
@@ -696,35 +747,46 @@
     return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
   }
 
+  function buildDateTimeIso(input) {
+    if (input.data && input.horario) {
+      return toIsoSafe(`${input.data}T${input.horario}`);
+    }
+    if (input.data) {
+      return toIsoSafe(`${input.data}T10:00`);
+    }
+    return toIsoSafe(input.data_hora);
+  }
+
   function createAtendimento(input, actorName = 'Equipe CRM (Demo)') {
     const all = readFromStorage();
     const nowIso = new Date().toISOString();
     const id = generateNextId(all);
     const leadSnap = resolveLeadSnapshot(input.lead_id);
-    const channel = String(input.canal || 'whatsapp');
+    const channel = normalizeChannelCode(String(input.canal || 'whatsapp'));
+    const status = normalizeStatusCode(String(input.status || 'pendente'));
     const attendant = String(input.responsavel_atendimento || actorName || 'Secretaria Demo').trim();
-    const eventIso = toIsoSafe(input.data_hora);
+    const eventIso = buildDateTimeIso(input);
 
     const newItem = {
       ...leadSnap,
       id,
+      nome_responsavel: String(input.nome_responsavel || leadSnap.nome_responsavel).trim(),
+      nome_aluno: String(input.nome_aluno ?? leadSnap.nome_aluno ?? '').trim(),
       canal: channel,
       responsavel_atendimento: attendant,
       data_hora: eventIso,
       descricao: String(input.descricao || '').trim(),
       resultado: String(input.resultado || '').trim(),
       proxima_acao: String(input.proxima_acao || '').trim(),
+      observacoes: String(input.observacoes || '').trim(),
       data_retorno: input.data_retorno ? toIsoSafe(input.data_retorno) : '',
-      status: String(input.status || 'em_andamento'),
+      status,
       ultima_atualizacao: nowIso,
       historico: [
         {
           id: `HA-${id}-${Date.now()}`,
           tipo: channel,
-          titulo:
-            channel === 'nota_interna'
-              ? 'Nota interna registrada'
-              : `Atendimento via ${getChannelLabel(channel)}`,
+          titulo: `Atendimento via ${getChannelLabel(channel)}`,
           descricao: String(input.descricao || '').trim(),
           autor: attendant,
           criado_em: nowIso
@@ -746,34 +808,43 @@
     const nowIso = new Date().toISOString();
     const targetLeadId = input.lead_id || current.lead_id;
     const leadSnap = resolveLeadSnapshot(targetLeadId, current);
+    const channel = normalizeChannelCode(String(input.canal || current.canal));
+    const status = normalizeStatusCode(String(input.status || current.status));
+    const hasSplitDate = Boolean(input.data);
+    const eventIso = hasSplitDate
+      ? buildDateTimeIso(input)
+      : input.data_hora
+        ? toIsoSafe(input.data_hora)
+        : current.data_hora;
 
     const updated = {
       ...current,
       ...leadSnap,
-      canal: String(input.canal || current.canal),
+      nome_responsavel: String(input.nome_responsavel || leadSnap.nome_responsavel || current.nome_responsavel).trim(),
+      nome_aluno: String(input.nome_aluno ?? leadSnap.nome_aluno ?? current.nome_aluno ?? '').trim(),
+      canal: channel,
       responsavel_atendimento: String(
         input.responsavel_atendimento || current.responsavel_atendimento
       ).trim(),
-      data_hora: input.data_hora ? toIsoSafe(input.data_hora) : current.data_hora,
+      data_hora: eventIso,
       descricao: String(input.descricao ?? current.descricao).trim(),
       resultado: String(input.resultado ?? current.resultado ?? '').trim(),
       proxima_acao: String(input.proxima_acao ?? current.proxima_acao ?? '').trim(),
+      observacoes: String(input.observacoes ?? current.observacoes ?? '').trim(),
       data_retorno:
         input.data_retorno !== undefined
           ? input.data_retorno
             ? toIsoSafe(input.data_retorno)
             : ''
           : current.data_retorno,
-      status: String(input.status || current.status),
+      status,
       ultima_atualizacao: nowIso,
       historico: [
         {
           id: `HA-${id}-${Date.now()}`,
           tipo: 'edicao',
           titulo: 'Atendimento atualizado',
-          descricao: `Registro editado (${getChannelLabel(input.canal || current.canal)} • ${getStatusLabel(
-            input.status || current.status
-          )}).`,
+          descricao: `Registro editado (${getChannelLabel(channel)} • ${getStatusLabel(status)}).`,
           autor: actorName,
           criado_em: nowIso
         },
@@ -824,15 +895,16 @@
     if (idx === -1) return null;
 
     const current = all[idx];
-    if (current.status === newStatus) return clone(current);
+    const normalizedNext = normalizeStatusCode(newStatus);
+    if (current.status === normalizedNext) return clone(current);
 
     const nowIso = new Date().toISOString();
     const oldLabel = getStatusLabel(current.status);
-    const newLabel = getStatusLabel(newStatus);
+    const newLabel = getStatusLabel(normalizedNext);
 
     const updated = {
       ...current,
-      status: newStatus,
+      status: normalizedNext,
       ultima_atualizacao: nowIso,
       historico: [
         {

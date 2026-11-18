@@ -6,8 +6,18 @@
 
 /* Notebooks e Telas Médias (<= 1280px) */
 @media screen and (max-width: 1280px) {
-  .crm-kpi-grid {
+  .crm-kpi-grid,
+  .crm-equipe-kpi-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .crm-leads-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .crm-dashboard-3col,
+  .crm-activity-grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .crm-search-input {
@@ -16,6 +26,10 @@
 
   .crm-filters-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .crm-kanban-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -28,8 +42,12 @@
   .crm-dashboard-grid,
   .crm-dashboard-secondary-grid,
   .crm-dashboard-lower-grid,
+  .crm-dashboard-3col,
+  .crm-activity-grid-5,
   .crm-placeholder-checklist,
-  .crm-attendant-grid {
+  .crm-attendant-grid,
+  .crm-kb-grid,
+  .crm-config-grid {
     grid-template-columns: 1fr;
   }
 
@@ -45,11 +63,24 @@
     width: 180px;
   }
 
+  .crm-kpi-grid,
+  .crm-equipe-kpi-row,
   .crm-leads-kpi-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .crm-filters-grid {
+  .crm-member-kpis-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .crm-filters-grid,
+  .crm-leads-filters-grid,
+  .crm-atend-filters-grid,
+  .crm-tarefas-filters-grid,
+  .crm-visitas-filters-grid,
+  .crm-equipe-filters-grid,
+  .crm-relatorios-filters-grid,
+  .crm-kb-filters-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -163,12 +194,27 @@
     padding: 1rem;
   }
 
-  .crm-filters-grid {
+  .crm-filters-grid,
+  .crm-leads-filters-grid,
+  .crm-atend-filters-grid,
+  .crm-tarefas-filters-grid,
+  .crm-visitas-filters-grid,
+  .crm-equipe-filters-grid,
+  .crm-relatorios-filters-grid,
+  .crm-kb-filters-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-form-span-2 {
+    grid-column: span 1;
   }
 
   .crm-filter-search {
     grid-column: span 2;
+  }
+
+  .crm-kanban-board {
+    grid-template-columns: 1fr;
   }
 
   .crm-form-grid-2,
@@ -176,8 +222,20 @@
     grid-template-columns: 1fr;
   }
 
-  .crm-attendant-kpis {
+  .crm-attendant-kpis,
+  .crm-member-kpis-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-member-detail-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .crm-attendant-bar-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
   }
 
   .crm-attendant-controls {
@@ -201,10 +259,17 @@
 
 /* Smartphones Estreitos (<= 480px) */
 @media screen and (max-width: 480px) {
-  .crm-kpi-grid {
+  .crm-kpi-grid,
+  .crm-equipe-kpi-row {
     grid-template-columns: 1fr;
   }
 
+  .crm-dash-owner-select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .crm-login-demo-roles,
   .login-demo-roles {
     grid-template-columns: 1fr;
   }
@@ -246,8 +311,21 @@
   }
 
   .crm-leads-kpi-row,
-  .crm-filters-grid {
+  .crm-filters-grid,
+  .crm-leads-filters-grid,
+  .crm-atend-filters-grid,
+  .crm-tarefas-filters-grid,
+  .crm-visitas-filters-grid,
+  .crm-equipe-filters-grid,
+  .crm-relatorios-filters-grid,
+  .crm-kb-filters-grid,
+  .crm-member-kpis-grid {
     grid-template-columns: 1fr;
+  }
+
+  .crm-config-save-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .crm-filter-search {
@@ -313,4 +391,35 @@
     flex-direction: column;
     gap: 0.25rem;
   }
+
+  .crm-detail-module-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-attention-grid,
+  .crm-gestor-metrics-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-header-role-pill {
+    display: none;
+  }
+
+  .crm-distribution-head,
+  .crm-workload-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
+
+@media (max-width: 1120px) and (min-width: 768px) {
+  .crm-attention-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-gestor-metrics-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

@@ -21,22 +21,22 @@
       items: [
         { id: 'leads', label: 'Leads', badge: '', icon: 'users' },
         { id: 'atendimentos', label: 'Atendimentos', badge: '', icon: 'message' },
-        { id: 'tarefas', label: 'Tarefas', badge: 'Em breve', icon: 'check-square' },
-        { id: 'visitas', label: 'Visitas', badge: 'Em breve', icon: 'calendar' }
+        { id: 'tarefas', label: 'Tarefas', badge: '', icon: 'check-square' },
+        { id: 'visitas', label: 'Visitas', badge: '', icon: 'calendar' }
       ]
     },
     {
       category: 'Gestão & Conhecimento',
       items: [
-        { id: 'relatorios', label: 'Relatórios', badge: 'Em breve', icon: 'bar-chart' },
-        { id: 'equipe', label: 'Equipe', badge: 'Em breve', icon: 'shield' },
-        { id: 'base-conhecimento', label: 'Base de conhecimento', badge: 'Em breve', icon: 'book' }
+        { id: 'relatorios', label: 'Relatórios', badge: '', icon: 'bar-chart' },
+        { id: 'equipe', label: 'Equipe', badge: '', icon: 'shield' },
+        { id: 'base-conhecimento', label: 'Base de conhecimento', badge: '', icon: 'book' }
       ]
     },
     {
       category: 'Sistema',
       items: [
-        { id: 'configuracoes', label: 'Configurações', badge: 'Em breve', icon: 'settings' }
+        { id: 'configuracoes', label: 'Configurações', badge: '', icon: 'settings' }
       ]
     }
   ];
@@ -45,7 +45,7 @@
     dashboard: {
       title: 'Dashboard',
       category: 'Visão Geral',
-      description: 'Indicadores gerais de captação, atendimentos e conversões escolares.',
+      description: 'Visão gerencial de captação, atendimentos, funil de conversão, visitas e matrículas.',
       plannedCapabilities: []
     },
     leads: {
@@ -106,7 +106,7 @@
     equipe: {
       title: 'Equipe',
       category: 'Gestão & Conhecimento',
-      description: 'Administração de perfis (Gestor e Atendente), status ativo e disponibilidade na fila.',
+      description: 'Administração visual de colaboradores, cargos demonstrativos, disponibilidade e indicadores individuais.',
       plannedCapabilities: [
         { title: 'Perfis de Acesso', text: 'Separação clara entre atribuições de Gestor Escolar e Atendente.' },
         { title: 'Controle de Disponibilidade', text: 'Ativação ou pausa na distribuição automática de novos leads.' },
@@ -138,6 +138,186 @@
     }
   };
 
+  const ROLE_NAV_CATEGORIES = {
+    atendente: [
+      {
+        category: 'Minha Visão',
+        items: [{ id: 'dashboard', label: 'Meu Dashboard', badge: '', icon: 'dashboard' }]
+      },
+      {
+        category: 'Minha Carteira',
+        items: [
+          { id: 'leads', label: 'Meus Leads', badge: '', icon: 'users' },
+          { id: 'atendimentos', label: 'Meus Atendimentos', badge: '', icon: 'message' },
+          { id: 'tarefas', label: 'Minhas Tarefas', badge: '', icon: 'check-square' },
+          { id: 'visitas', label: 'Minhas Visitas', badge: '', icon: 'calendar' }
+        ]
+      },
+      {
+        category: 'Acompanhamento',
+        items: [
+          { id: 'relatorios', label: 'Meu Desempenho', badge: '', icon: 'bar-chart' },
+          { id: 'base-conhecimento', label: 'Base de Conhecimento', badge: '', icon: 'book' }
+        ]
+      },
+      {
+        category: 'Conta',
+        items: [{ id: 'configuracoes', label: 'Meu Perfil', badge: '', icon: 'settings' }]
+      }
+    ],
+    gestor: [
+      {
+        category: 'Visão Geral',
+        items: [{ id: 'dashboard', label: 'Dashboard Geral', badge: '', icon: 'dashboard' }]
+      },
+      {
+        category: 'Operação & Captação',
+        items: [
+          { id: 'leads', label: 'Gestão de Leads', badge: '', icon: 'users' },
+          { id: 'atendimentos', label: 'Atendimentos', badge: '', icon: 'message' },
+          { id: 'tarefas', label: 'Gestão de Tarefas', badge: '', icon: 'check-square' },
+          { id: 'visitas', label: 'Agenda de Visitas', badge: '', icon: 'calendar' }
+        ]
+      },
+      {
+        category: 'Direção & Análise',
+        items: [
+          { id: 'relatorios', label: 'Relatórios', badge: '', icon: 'bar-chart' },
+          { id: 'equipe', label: 'Equipe', badge: '', icon: 'shield' },
+          { id: 'base-conhecimento', label: 'Base de Conhecimento', badge: '', icon: 'book' }
+        ]
+      },
+      {
+        category: 'Sistema',
+        items: [{ id: 'configuracoes', label: 'Configurações', badge: '', icon: 'settings' }]
+      }
+    ]
+  };
+
+  const ROLE_MODULE_META = {
+    atendente: {
+      dashboard: {
+        title: 'Meu Dashboard',
+        category: 'Minha Visão',
+        description: 'Agenda do dia, retornos pendentes, tarefas atrasadas e resultados da sua carteira individual.'
+      },
+      leads: {
+        title: 'Meus Leads',
+        category: 'Minha Carteira',
+        description: 'Carteira individual de famílias atribuídas a você para atendimento e acompanhamento de matrícula.'
+      },
+      atendimentos: {
+        title: 'Meus Atendimentos',
+        category: 'Minha Carteira',
+        description: 'Registro de contatos realizados, notas internas, retornos programados e evolução da sua carteira.'
+      },
+      tarefas: {
+        title: 'Minhas Tarefas',
+        category: 'Minha Carteira',
+        description: 'Sua fila diária de follow-ups, ligações e compromissos com destaque para prazos vencidos.'
+      },
+      visitas: {
+        title: 'Minhas Visitas',
+        category: 'Minha Carteira',
+        description: 'Agenda das visitas guiadas sob sua responsabilidade, confirmações e registro de comparecimento.'
+      },
+      relatorios: {
+        title: 'Meu Desempenho',
+        category: 'Acompanhamento',
+        description: 'Indicadores individuais de atendimentos, visitas, tarefas concluídas e conversões da sua carteira.'
+      },
+      equipe: {
+        title: 'Acesso Restrito',
+        category: 'Gestão Escolar',
+        description: 'Módulo gerencial disponível exclusivamente para o perfil Gestor Escolar.'
+      },
+      'base-conhecimento': {
+        title: 'Base de Conhecimento',
+        category: 'Acompanhamento',
+        description: 'Consulta rápida a orientações pedagógicas, calendário, valores e roteiros de atendimento.'
+      },
+      configuracoes: {
+        title: 'Meu Perfil',
+        category: 'Conta',
+        description: 'Suas informações de perfil demonstrativo, preferências de notificações e ajustes de interface.'
+      }
+    },
+    gestor: {
+      dashboard: {
+        title: 'Dashboard Geral',
+        category: 'Visão Geral',
+        description: 'Visão gerencial completa da captação escolar, gargalos, funil de conversão e produtividade da equipe.'
+      },
+      leads: {
+        title: 'Gestão de Leads',
+        category: 'Operação & Captação',
+        description: 'Distribuição de carteira, acompanhamento de leads sem responsável e visão global de captação.'
+      },
+      atendimentos: {
+        title: 'Atendimentos',
+        category: 'Operação & Captação',
+        description: 'Visão completa de todos os atendimentos da escola por colaborador, canal, retorno e etapa.'
+      },
+      tarefas: {
+        title: 'Gestão de Tarefas',
+        category: 'Operação & Captação',
+        description: 'Acompanhamento de carga operacional, redistribuição entre atendentes e controle de atrasos da equipe.'
+      },
+      visitas: {
+        title: 'Agenda de Visitas',
+        category: 'Operação & Captação',
+        description: 'Agenda geral de visitas guiadas da escola com filtro por responsável interno e período.'
+      },
+      relatorios: {
+        title: 'Relatórios',
+        category: 'Direção & Análise',
+        description: 'Relatórios gerenciais completos, comparativo entre atendentes, origens, perdas e exportação CSV.'
+      },
+      equipe: {
+        title: 'Equipe',
+        category: 'Direção & Análise',
+        description: 'Administração de colaboradores, papéis demonstrativos, disponibilidade e indicadores individuais.'
+      },
+      'base-conhecimento': {
+        title: 'Base de Conhecimento',
+        category: 'Direção & Análise',
+        description: 'Criação, atualização e publicação de orientações internas e guias para toda a equipe.'
+      },
+      configuracoes: {
+        title: 'Configurações',
+        category: 'Sistema',
+        description: 'Parâmetros institucionais da escola, dados operacionais, perfil e preferências do CRM.'
+      }
+    }
+  };
+
+  function normalizeRole(role) {
+    return role === 'atendente' ? 'atendente' : 'gestor';
+  }
+
+  function getNavCategoriesForRole(role = 'gestor') {
+    const normalized = normalizeRole(role);
+    return ROLE_NAV_CATEGORIES[normalized] || NAV_CATEGORIES;
+  }
+
+  function getModuleMetaForRole(routeId, role = 'gestor') {
+    const normalized = normalizeRole(role);
+    const base = MODULE_META[routeId] || MODULE_META.dashboard;
+    const roleMeta = (ROLE_MODULE_META[normalized] && ROLE_MODULE_META[normalized][routeId]) || {};
+    return {
+      ...base,
+      ...roleMeta
+    };
+  }
+
+  function isRouteAllowedForRole(routeId, role = 'gestor') {
+    const normalized = normalizeRole(role);
+    if (normalized === 'atendente' && routeId === 'equipe') {
+      return false;
+    }
+    return true;
+  }
+
   function getIconSvg(name) {
     const icons = {
       dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect>',
@@ -168,10 +348,12 @@
     return MODULE_META[clean] ? clean : 'dashboard';
   }
 
-  function renderSidebarNav(container, activeRoute) {
+  function renderSidebarNav(container, activeRoute, role = 'gestor') {
     if (!container) return;
 
-    container.innerHTML = NAV_CATEGORIES.map((group) => {
+    const categories = getNavCategoriesForRole(role);
+
+    container.innerHTML = categories.map((group) => {
       const itemsHtml = group.items
         .map((item) => {
           const isActive = item.id === activeRoute;
@@ -205,8 +387,8 @@
     }).join('');
   }
 
-  function updateHeaderMeta(routeId) {
-    const meta = MODULE_META[routeId] || MODULE_META.dashboard;
+  function updateHeaderMeta(routeId, role = 'gestor') {
+    const meta = getModuleMetaForRole(routeId, role);
     const titleEl = document.getElementById('crm-page-title');
     const breadcrumbEl = document.getElementById('crm-breadcrumb');
 
@@ -226,6 +408,40 @@
 
     if (globalScope.document) {
       globalScope.document.title = `${meta.title} | CRM ENSINA AÍ`;
+    }
+  }
+
+  function renderRestrictedModuleView(container, role, onReturnDashboard) {
+    if (!container) return;
+    const roleLabel = role === 'atendente' ? 'Atendente' : 'Colaborador';
+    container.innerHTML = `
+      <section class="crm-guard-card" role="region" aria-label="Área restrita ao perfil Gestor Escolar">
+        <div class="crm-guard-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <span class="crm-guard-badge">Simulação visual de perfil &bull; Acesso gerencial</span>
+        <h2>Gestão de Equipe indisponível no perfil ${escapeHtml(roleLabel)}</h2>
+        <p>
+          O gerenciamento de colaboradores, permissões e comparativos da equipe faz parte da visão de
+          <strong>Gestor Escolar</strong>. No perfil <strong>Atendente</strong>, você visualiza apenas sua própria carteira operacional.
+        </p>
+        <p class="crm-guard-note">
+          Nota técnica: nesta etapa de front-end a separação de menus e telas é exclusivamente demonstrativa; a validação definitiva de permissões será aplicada no back-end.
+        </p>
+        <div class="crm-guard-actions">
+          <button type="button" class="btn btn-primary" id="crm-guard-back-dashboard">
+            Ir para Meu Dashboard
+          </button>
+        </div>
+      </section>
+    `;
+
+    const backBtn = container.querySelector('#crm-guard-back-dashboard');
+    if (backBtn && typeof onReturnDashboard === 'function') {
+      backBtn.addEventListener('click', onReturnDashboard);
     }
   }
 
@@ -425,10 +641,14 @@
   globalScope.EnsinaAiCrmNavigation = Object.freeze({
     NAV_CATEGORIES,
     MODULE_META,
+    getNavCategoriesForRole,
+    getModuleMetaForRole,
+    isRouteAllowedForRole,
     resolveRoute,
     renderSidebarNav,
     updateHeaderMeta,
     renderPlannedModuleView,
+    renderRestrictedModuleView,
     setupSidebarControls
   });
 })(window);
