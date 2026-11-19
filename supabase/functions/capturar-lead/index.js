@@ -14,7 +14,10 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5500',
-  'http://127.0.0.1:5500'
+  'http://127.0.0.1:5500',
+  'https://ensina-ai-backend-b5r5cmchk-carlos-alberto-carneiros-projects.vercel.app',
+  'https://ensina-ai-backend.vercel.app'
+
 ];
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutos
