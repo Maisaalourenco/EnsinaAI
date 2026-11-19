@@ -23,6 +23,26 @@
   <!-- Folhas de Estilo -->
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/responsive.css" />
+  <!-- Estilo do chat n8n -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" />
+
+<style>
+  :root {
+    --chat--window--width: 380px;
+    --chat--window--height: min(520px, calc(100dvh - 100px));
+    --chat--heading--font-size: 1.5rem;
+    --chat--header--padding: 1rem;
+    --chat--toggle--background: #1E3A8A;
+  }
+
+  @media (max-width: 480px) {
+    :root {
+      --chat--window--width: calc(100vw - 24px);
+      --chat--window--height: min(520px, calc(100dvh - 90px));
+    }
+  }
+</style>
+
 </head>
 <body>
 
@@ -1354,5 +1374,35 @@
   <script src="js/lead-gateway.js"></script>
   <script src="js/form.js"></script>
   <script src="js/faq.js"></script>
+
+<!-- Assistente Virtual ENSINA AÍ -->
+<div id="n8n-chat"></div>
+
+<script type="module">
+  import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+  createChat({
+    webhookUrl: 'https://n8n.pointcontrol.com.br/webhook/704b61e2-5c41-4509-99c9-bba6240acc66/chat',
+    target: '#n8n-chat',
+    mode: 'window',
+    chatInputKey: 'chatInput',
+    chatSessionKey: 'sessionId',
+    loadPreviousSession: false,
+    showWelcomeScreen: false,
+    initialMessages: [
+      'Olá! Sou o assistente virtual do Ensina Aí. Como posso ajudar?'
+    ],
+    i18n: {
+      en: {
+        title: 'Assistente Ensina Aí',
+        subtitle: 'Tire suas dúvidas sobre a escola',
+        footer: 'Para matrículas, utilize o formulário Fale Conosco.',
+        getStarted: 'Iniciar conversa',
+        inputPlaceholder: 'Digite sua dúvida aqui...'
+      }
+    }
+  });
+</script>
+
 </body>
 </html>

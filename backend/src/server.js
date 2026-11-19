@@ -346,6 +346,89 @@ app.get(
     }
   }
 );
+
+
+app.get(
+  "/api/leads",
+  autenticar,
+  permitirPapeis("gestor", "atendente"),
+  async (req, res) => {
+    try {
+      let idsPermitidos = null;
+
+      if (req.usuario.papel === "atendente") {
+        const { data, error } = await supabaseAdmin
+          .from("atendimentos")
+          .select("lead_id")
+          .eq("atendente_id", req.usuario.id)
+          .limit(100);
+
+        if (error) {
+          return res.status(502).json({
+            sucesso: false,
+            mensagem: "Erro ao consultar atribuições."
+          });
+        }
+
+        idsPermitidos = [
+          ...new Set(data.map(item => item.lead_id))
+        ];
+
+        if (idsPermitidos.length === 0) {
+          return res.json({
+            sucesso: true,
+            total: 0,
+            leads: []
+          });
+        }
+      }
+
+      let consulta = supabaseAdmin
+        .from("leads")
+        .select(`
+          id,
+          nome_responsavel,
+          nome_aluno,
+          telefone,
+          email,
+          serie_interesse_id,
+          turno_interesse_id,
+          canal,
+          criado_em
+        `)
+        .order("criado_em", { ascending: false })
+        .limit(100);
+
+      if (idsPermitidos !== null) {
+        consulta = consulta.in("id", idsPermitidos);
+      }
+
+      const { data: leads, error } = await consulta;
+
+      if (error) {
+        return res.status(502).json({
+          sucesso: false,
+          mensagem: "Erro ao consultar leads."
+        });
+      }
+
+      return res.json({
+        sucesso: true,
+        total: leads.length,
+        leads
+      });
+
+    } catch (erro) {
+      console.error("Erro na API de leads:", erro.message);
+
+      return res.status(500).json({
+        sucesso: false,
+        mensagem: "Erro interno do servidor."
+      });
+    }
+  }
+);
+
 // Rotas de integração com serviços externos
 
 app.use("/api/integracoes", rotasIntegracoes);

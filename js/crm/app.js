@@ -239,40 +239,71 @@
       });
     }
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (loginErrorBanner) loginErrorBanner.hidden = true;
 
-      const emailOk = validateEmailField();
-      const passOk = validatePasswordField();
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-      if (!emailOk) {
-        emailInput.focus();
-        return;
-      }
-      if (!passOk) {
-        passwordInput.focus();
-        return;
-      }
+  if (loginErrorBanner) loginErrorBanner.hidden = true;
 
-      if (submitBtn) submitBtn.disabled = true;
-      if (spinner) spinner.hidden = false;
-      if (submitText) submitText.textContent = 'Verificando acesso...';
-      form.setAttribute('aria-busy', 'true');
+  const emailOk = validateEmailField();
+  const passOk = validatePasswordField();
 
-      globalScope.setTimeout(() => {
-        if (submitBtn) submitBtn.disabled = false;
-        if (spinner) spinner.hidden = true;
-        if (submitText) submitText.textContent = 'Entrar';
-        form.setAttribute('aria-busy', 'false');
+  if (!emailOk) {
+    emailInput.focus();
+    return;
+  }
 
-        if (loginErrorBanner) {
-          loginErrorBanner.textContent =
-            'Autenticação oficial ainda não integrada nesta etapa visual. Utilize o botão "Entrar em Modo Demonstração" logo abaixo para explorar o CRM.';
-          loginErrorBanner.hidden = false;
-        }
-      }, 500);
-    });
+  if (!passOk) {
+    passwordInput.focus();
+    return;
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (spinner) spinner.hidden = false;
+  if (submitText) submitText.textContent = 'Autenticando...';
+  form.setAttribute('aria-busy', 'true');
+
+  try {
+    if (!window.EnsinaAiCrmAuth) {
+      throw new Error('Serviço de autenticação indisponível.');
+    }
+
+    const resultado = await window.EnsinaAiCrmAuth.entrar(
+      emailInput.value.trim(),
+      passwordInput.value
+    );
+
+    console.log('Autenticação validada. Papel:', resultado.perfil.papel);
+
+
+    // Remove o modo demonstração, caso esteja ativo.
+    clearDemoSession();
+
+    // Abre o CRM com a sessão real do Supabase.
+    const targetUrl =
+      document.body.getAttribute('data-crm-dashboard-url') ||
+      '../crm.html#dashboard';
+
+    globalScope.location.href = targetUrl;
+
+
+    // A navegação será habilitada após protegermos
+    // o painel e conectarmos o perfil real ao CRM.
+
+  } catch (erro) {
+    if (loginErrorBanner) {
+      loginErrorBanner.textContent =
+        erro.message || 'Não foi possível realizar o login.';
+      loginErrorBanner.hidden = false;
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+    if (spinner) spinner.hidden = true;
+    if (submitText) submitText.textContent = 'Entrar';
+    form.setAttribute('aria-busy', 'false');
+  }
+});
+
 
     if (demoAccessBtn) {
       demoAccessBtn.addEventListener('click', () => {
@@ -287,7 +318,7 @@
     }
   }
 
-  function initCrmShell() {
+  async function initCrmShell() {
     const viewContainer = document.getElementById('crm-view-container');
     const sidebarNav = document.getElementById('crm-sidebar-nav');
     if (!viewContainer || !sidebarNav) return;
@@ -305,11 +336,70 @@
     const configuracoesService = globalScope.EnsinaAiConfiguracoesService;
     if (!navApi || !dashboardApi) return;
 
-    if (configuracoesService && typeof configuracoesService.applyVisualPreferences === 'function') {
-      configuracoesService.applyVisualPreferences(configuracoesService.getSettings());
-    }
 
-    let currentSession = getStoredDemoSession();
+if (
+  configuracoesService &&
+  typeof configuracoesService.applyVisualPreferences === 'function'
+) {
+  configuracoesService.applyVisualPreferences(
+    configuracoesService.getSettings()
+  );
+}
+
+let currentSession;
+
+let modoDemo = false;
+
+try {
+  modoDemo = Boolean(
+    globalScope.sessionStorage.getItem(DEMO_SESSION_KEY)
+  );
+} catch {
+  modoDemo = false;
+}
+
+if (modoDemo) {
+  // Mantém o modo demonstração existente.
+  currentSession = {
+    ...getStoredDemoSession(),
+    isDemo: true
+  };
+} else {
+  // Verifica o usuário autenticado no Supabase.
+  const auth = globalScope.EnsinaAiCrmAuth;
+  const resultado = auth
+    ? await auth.usuarioAtual()
+    : null;
+
+  if (!resultado) {
+    // Sem sessão válida, volta para o login.
+    globalScope.location.replace('crm/login.html');
+    return;
+  }
+
+  const perfil = resultado.perfil;
+  const modelo = DEMO_PROFILES[perfil.papel];
+
+  if (!modelo) {
+    globalScope.location.replace('crm/login.html');
+    return;
+  }
+
+  currentSession = {
+    ...modelo,
+    name: perfil.nome,
+    email: resultado.usuario.email || '',
+    initials: perfil.nome
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(parte => parte[0])
+      .join('')
+      .toUpperCase(),
+    isDemo: false
+  };
+}
+
     let currentRoute = navApi.resolveRoute(globalScope.location.hash);
     let pendingLeadsSearch = '';
     let pendingAtendimentosContext = null;
@@ -453,6 +543,14 @@
           onNavigate: (nextRoute) => navigateTo(nextRoute),
           onNavigateModule: navigateWithContext
         });
+
+      } else if (
+  currentRoute === 'leads' &&
+  !currentSession.isDemo &&
+  globalScope.EnsinaAiRealLeads
+) {
+  globalScope.EnsinaAiRealLeads.render(viewContainer);
+
       } else if (currentRoute === 'leads' && leadsApi) {
         const initialSearch = pendingLeadsSearch;
         pendingLeadsSearch = '';
@@ -583,6 +681,14 @@
     const quickRoleBtn = document.getElementById('crm-header-role-pill');
 
     function handleSwitchDemoRole() {
+
+if (!currentSession.isDemo) {
+  showToast(
+    'Seu perfil é definido pelo Supabase e não pode ser alterado manualmente.'
+  );
+  return;
+}
+
       const nextRole = currentSession.role === 'gestor' ? 'atendente' : 'gestor';
       currentSession = saveDemoSession(nextRole);
       syncUserHeader();
@@ -673,12 +779,39 @@
       });
     }
 
-    const logoutLinks = document.querySelectorAll('#crm-sidebar-logout, #crm-menu-logout');
-    logoutLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        clearDemoSession();
-      });
-    });
+
+const logoutLinks = document.querySelectorAll(
+  '#crm-sidebar-logout, #crm-menu-logout'
+);
+
+logoutLinks.forEach((link) => {
+  link.addEventListener('click', async (event) => {
+    event.preventDefault();
+
+    try {
+      const auth = globalScope.EnsinaAiCrmAuth;
+
+      // Encerra a sessão real do Supabase.
+      if (auth) {
+        await auth.sair();
+      } else if (!currentSession.isDemo) {
+        throw new Error('Serviço de autenticação indisponível.');
+      }
+
+      // Limpa também a sessão demonstrativa.
+      clearDemoSession();
+
+      // Retorna à tela de login.
+      globalScope.location.href = 'crm/login.html';
+
+    } catch (erro) {
+      showToast(
+        'Não foi possível encerrar a sessão. Tente novamente.'
+      );
+    }
+  });
+});
+
 
     document.addEventListener('click', (e) => {
       if (
