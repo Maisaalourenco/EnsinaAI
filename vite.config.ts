@@ -1,22 +1,53 @@
+
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
-import {defineConfig} from 'vite';
+import path from 'node:path';
+import { cpSync } from 'node:fs';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+
+      // Preserva os arquivos JavaScript e recursos
+      // utilizados pela Landing Page e pelo CRM.
+      {
+        name: 'ensina-ai-copy-static',
+        apply: 'build',
+        closeBundle() {
+          for (const pasta of ['js', 'css', 'assets']) {
+            cpSync(
+              path.resolve(__dirname, pasta),
+              path.resolve(__dirname, 'dist', pasta),
+              { recursive: true }
+            );
+          }
+        }
+      }
+    ],
+
+    // Inclui todas as páginas no build.
+    build: {
+      rolldownOptions: {
+        input: {
+          landing: path.resolve(__dirname, 'index.html'),
+          crm: path.resolve(__dirname, 'crm.html'),
+          login: path.resolve(__dirname, 'crm/login.html')
+        }
+      }
+    },
+
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
+        '@': path.resolve(__dirname, '.')
+      }
     },
+
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
-    },
+      watch: process.env.DISABLE_HMR === 'true' ? null : {}
+    }
   };
 });
